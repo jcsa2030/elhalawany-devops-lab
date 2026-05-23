@@ -307,7 +307,7 @@ footer {
 <section class="hero">
     <div>
         <span class="badge">Environment: ${APP_ENV.toUpperCase()}</span>
-        <h1>Enterprise Multi-Tier DevOps Architecture</h1>
+        <h1>Enterprise Multi-Tier DevOps Architecture lab</h1>
         <p>${APP_MESSAGE}</p>
         <p>
             Browser → NGINX → Node.js Express → PostgreSQL + Redis
