@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
     environment {
         IMAGE_NAME = 'elhalawany-devops-app:latest'
         SONARQUBE_SERVER = 'SonarQube'
@@ -11,7 +17,22 @@ pipeline {
 
         stage('Checkout') {
             steps {
+                echo 'Checking out source code from GitHub...'
                 checkout scm
+            }
+        }
+
+        stage('Verify Tools') {
+            steps {
+                sh '''
+                echo "Verifying required tools..."
+                node --version
+                npm --version
+                docker --version
+                docker compose version
+                sonar-scanner --version
+                trivy --version
+                '''
             }
         }
 
@@ -35,7 +56,7 @@ pipeline {
                       -Dsonar.projectKey=elhalawany-devops-lab \
                       -Dsonar.projectName="Elhalawany DevOps Lab" \
                       -Dsonar.sources=. \
-                      -Dsonar.exclusions=node_modules/**,coverage/**,dist/**,build/**
+                      -Dsonar.exclusions=node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**
                     '''
                 }
             }
@@ -55,7 +76,10 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t ${IMAGE_NAME} .'
+                sh '''
+                echo "Building Docker image..."
+                docker build -t ${IMAGE_NAME} .
+                '''
             }
         }
 
@@ -67,6 +91,18 @@ pipeline {
                   --exit-code 0 \
                   ${IMAGE_NAME}
                 '''
+            }
+        }
+
+        stage('Production Approval') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    input(
+                        message: 'Approve deployment to the lab production environment?',
+                        ok: 'Deploy',
+                        submitter: 'prod1,prod2'
+                    )
+                }
             }
         }
 
@@ -95,7 +131,7 @@ ENABLE_SECURITY_HEADERS=true
 ENABLE_CORS=true
 EOF
 
-                echo "Environment file created:"
+                echo "Environment file created successfully:"
                 ls -la .env.dev
                 '''
             }
@@ -104,6 +140,7 @@ EOF
         stage('Cleanup Old Containers') {
             steps {
                 sh '''
+                echo "Cleaning old containers and compose stack..."
                 docker compose down --remove-orphans || true
 
                 docker rm -f elhalawany-redis || true
@@ -119,6 +156,7 @@ EOF
                 sh '''
                 echo "Deploying application using Docker Compose..."
                 docker compose up -d --build
+                docker ps
                 '''
             }
         }
