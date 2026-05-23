@@ -4,10 +4,10 @@ pipeline {
     environment {
         IMAGE_NAME = 'elhalawany-devops-app:latest'
         SONARQUBE_SERVER = 'SonarQube'
+        PATH = "/usr/local/bin:/usr/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin:${env.PATH}"
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 checkout scm
@@ -69,17 +69,51 @@ pipeline {
             }
         }
 
+        stage('Create Environment File') {
+            steps {
+                sh '''
+                cat > .env.dev <<EOF
+APP_NAME=Elhalawany Dev Environment
+APP_ENV=dev
+PORT=3000
+APP_COLOR=#38bdf8
+APP_MESSAGE=Development Environment - Jenkins CI/CD Deployment
+
+DB_HOST=postgres
+DB_PORT=5432
+DB_NAME=devopsdb
+DB_USER=devopsuser
+DB_PASSWORD=devopspassword
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+EOF
+
+                echo "Checking .env.dev file:"
+                ls -la .env.dev
+                '''
+            }
+        }
+
         stage('Deploy') {
             steps {
-                sh 'docker compose down || true'
-                sh 'docker compose up -d --build'
+                sh '''
+                echo "Current workspace:"
+                pwd
+
+                echo "Verify env file before deployment:"
+                ls -la .env.dev
+
+                docker compose down || true
+                docker compose up -d --build
+                '''
             }
         }
 
         stage('Health Check') {
             steps {
                 sh '''
-                sleep 15
+                sleep 20
                 curl -f http://localhost:8080/health
                 curl -f http://localhost:8080/api/db-health
                 curl -f http://localhost:8080/api/redis-health
