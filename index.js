@@ -5,6 +5,9 @@ const morgan = require('morgan');
 const cors = require('cors');
 const { Pool } = require('pg');
 const { createClient } = require('redis');
+const fs = require('fs');
+const path = require('path');
+const csv = require('csv-parser');
 
 const nodeEnv = process.env.NODE_ENV || 'dev';
 
@@ -68,6 +71,7 @@ const dashboardData = {
         redis: 70,
         jenkins: 65,
         security: 60,
+        nist: 70,
         kubernetes: 40
     },
     test: {
@@ -77,6 +81,7 @@ const dashboardData = {
         redis: 80,
         jenkins: 75,
         security: 75,
+        nist: 80,
         kubernetes: 60
     },
     production: {
@@ -86,11 +91,30 @@ const dashboardData = {
         redis: 90,
         jenkins: 90,
         security: 90,
+        nist: 90,
         kubernetes: 85
     }
 };
 
 const currentMetrics = dashboardData[APP_ENV] || dashboardData.dev;
+
+/* Helper: Read NIST CSV */
+function readNistCsv() {
+    return new Promise((resolve, reject) => {
+        const results = [];
+        const filePath = path.join(__dirname, 'compliance', 'nist', 'NIST-CSF.csv');
+
+        if (!fs.existsSync(filePath)) {
+            return reject(new Error(`NIST CSV file not found at ${filePath}`));
+        }
+
+        fs.createReadStream(filePath)
+            .pipe(csv())
+            .on('data', (data) => results.push(data))
+            .on('end', () => resolve(results))
+            .on('error', reject);
+    });
+}
 
 /* Home Page */
 app.get('/', (req, res) => {
@@ -300,6 +324,7 @@ footer {
         <a href="/api/dashboard">Dashboard</a>
         <a href="/api/db-health">PostgreSQL</a>
         <a href="/api/redis-health">Redis</a>
+        <a href="/api/nist-controls">NIST</a>
         <a href="/about">About</a>
     </nav>
 </header>
@@ -310,10 +335,11 @@ footer {
         <h1>Enterprise Multi-Tier DevOps Architecture</h1>
         <p>${APP_MESSAGE}</p>
         <p>
-            Browser → NGINX → Node.js Express → PostgreSQL + Redis
+            Browser → NGINX → Node.js Express → PostgreSQL + Redis + NIST Controls API
         </p>
         <a class="btn" href="/api/db-health">Check PostgreSQL</a>
         <a class="btn" href="/api/redis-health">Check Redis</a>
+        <a class="btn" href="/api/nist-controls">View NIST Controls</a>
     </div>
 
     <div>
@@ -343,6 +369,11 @@ footer {
         <div class="card">
             <h3>Redis Cache</h3>
             <p>Provides caching and fast key-value storage.</p>
+        </div>
+
+        <div class="card">
+            <h3>NIST Controls API</h3>
+            <p>Reads NIST CSV controls from the project and exposes them through REST API.</p>
         </div>
     </div>
 </section>
@@ -383,6 +414,11 @@ footer {
                 <span><b>Security Scan</b><b>${currentMetrics.security}%</b></span>
                 <div class="progress"><div style="width:${currentMetrics.security}%"></div></div>
             </div>
+
+            <div class="progress-box">
+                <span><b>NIST API</b><b>${currentMetrics.nist}%</b></span>
+                <div class="progress"><div style="width:${currentMetrics.nist}%"></div></div>
+            </div>
         </div>
 
         <div class="card">
@@ -393,12 +429,13 @@ footer {
             <p><b>NGINX:</b> Enabled</p>
             <p><b>PostgreSQL API:</b> /api/db-health</p>
             <p><b>Redis API:</b> /api/redis-health</p>
+            <p><b>NIST API:</b> /api/nist-controls</p>
         </div>
     </div>
 </section>
 
 <footer>
-    © 2026 Elhalawany Multi-Tier DevOps Lab | Node.js, Express, NGINX, PostgreSQL, Redis, Docker
+    © 2026 Elhalawany Multi-Tier DevOps Lab | Node.js, Express, NGINX, PostgreSQL, Redis, Docker, NIST
 </footer>
 
 </body>
@@ -478,6 +515,54 @@ app.get('/api/redis-health', async (req, res) => {
     }
 });
 
+/* NIST Controls API */
+app.get('/api/nist-controls', async (req, res) => {
+    try {
+        const controls = await readNistCsv();
+
+        res.json({
+            status: 'UP',
+            framework: 'NIST CSF',
+            file: 'compliance/nist/NIST-CSF.csv',
+            total_controls: controls.length,
+            controls
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 'ERROR',
+            framework: 'NIST CSF',
+            message: 'Failed to read NIST CSV file',
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+/* NIST Summary API */
+app.get('/api/nist-summary', async (req, res) => {
+    try {
+        const controls = await readNistCsv();
+
+        const sample = controls.slice(0, 5);
+
+        res.json({
+            status: 'UP',
+            framework: 'NIST CSF',
+            total_controls: controls.length,
+            sample_controls: sample,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 'ERROR',
+            framework: 'NIST CSF',
+            message: 'Failed to summarize NIST CSV file',
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 /* Dashboard API */
 app.get('/api/dashboard', (req, res) => {
     res.json({
@@ -488,9 +573,20 @@ app.get('/api/dashboard', (req, res) => {
             application_tier: 'Node.js + Express',
             database_tier: 'PostgreSQL',
             cache_tier: 'Redis',
+            compliance_reference: 'NIST CSV API',
             security_tier: 'Helmet + CORS + Morgan'
         },
         metrics: currentMetrics,
+        available_routes: [
+            '/',
+            '/health',
+            '/api/dashboard',
+            '/api/db-health',
+            '/api/redis-health',
+            '/api/nist-controls',
+            '/api/nist-summary',
+            '/about'
+        ],
         status: 'Running',
         timestamp: new Date().toISOString()
     });
@@ -530,7 +626,7 @@ a {
 <div class="card">
     <h1>About ${APP_NAME}</h1>
     <p>This is a multi-tier DevOps lab application.</p>
-    <p><b>Architecture:</b> Browser → NGINX → Node.js → PostgreSQL + Redis</p>
+    <p><b>Architecture:</b> Browser → NGINX → Node.js → PostgreSQL + Redis + NIST CSV API</p>
     <p><b>Environment:</b> ${APP_ENV.toUpperCase()}</p>
     <a href="/">Back to Home</a>
 </div>
@@ -551,6 +647,8 @@ app.use((req, res) => {
             '/api/dashboard',
             '/api/db-health',
             '/api/redis-health',
+            '/api/nist-controls',
+            '/api/nist-summary',
             '/about'
         ]
     });
@@ -561,4 +659,5 @@ app.listen(PORT, () => {
     console.log('Server running on port ' + PORT);
     console.log('Environment: ' + APP_ENV);
     console.log('Redis route enabled: /api/redis-health');
+    console.log('NIST route enabled: /api/nist-controls');
 });
