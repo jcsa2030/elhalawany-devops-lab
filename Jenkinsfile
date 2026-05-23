@@ -8,6 +8,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -75,6 +76,7 @@ pipeline {
                 cat > .env.dev <<EOF
 APP_NAME=Elhalawany Dev Environment
 APP_ENV=dev
+NODE_ENV=dev
 PORT=3000
 APP_COLOR=#38bdf8
 APP_MESSAGE=Development Environment - Jenkins CI/CD Deployment
@@ -87,10 +89,27 @@ DB_PASSWORD=devopspassword
 
 REDIS_HOST=redis
 REDIS_PORT=6379
+
+LOG_LEVEL=debug
+ENABLE_SECURITY_HEADERS=true
+ENABLE_CORS=true
 EOF
 
-                echo "Checking .env.dev file:"
+                echo "Environment file created:"
                 ls -la .env.dev
+                '''
+            }
+        }
+
+        stage('Cleanup Old Containers') {
+            steps {
+                sh '''
+                docker compose down --remove-orphans || true
+
+                docker rm -f elhalawany-redis || true
+                docker rm -f elhalawany-postgres || true
+                docker rm -f elhalawany-app || true
+                docker rm -f elhalawany-nginx || true
                 '''
             }
         }
@@ -98,13 +117,7 @@ EOF
         stage('Deploy') {
             steps {
                 sh '''
-                echo "Current workspace:"
-                pwd
-
-                echo "Verify env file before deployment:"
-                ls -la .env.dev
-
-                docker compose down || true
+                echo "Deploying application using Docker Compose..."
                 docker compose up -d --build
                 '''
             }
@@ -113,9 +126,16 @@ EOF
         stage('Health Check') {
             steps {
                 sh '''
-                sleep 20
+                echo "Waiting for services to start..."
+                sleep 25
+
+                echo "Checking main application..."
                 curl -f http://localhost:8080/health
+
+                echo "Checking PostgreSQL..."
                 curl -f http://localhost:8080/api/db-health
+
+                echo "Checking Redis..."
                 curl -f http://localhost:8080/api/redis-health
                 '''
             }
@@ -128,7 +148,7 @@ EOF
         }
 
         failure {
-            echo 'DevSecOps Pipeline failed.'
+            echo 'DevSecOps Pipeline failed. Review Jenkins logs.'
         }
 
         always {
