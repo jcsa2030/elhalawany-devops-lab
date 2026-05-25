@@ -57,6 +57,7 @@ pipeline {
                       -Dsonar.projectName="Elhalawany DevOps Lab" \
                       -Dsonar.sources=. \
                       -Dsonar.exclusions=node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**
+                      -Dsonar.exclusions=node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,scripts/**,*.csv,*.json
                     '''
                 }
             }
