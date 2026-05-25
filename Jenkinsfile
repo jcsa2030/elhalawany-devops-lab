@@ -264,5 +264,5 @@ stage('OWASP ZAP DAST Scan') {
     echo 'SBOM reports archived.'
 
     echo 'Pipeline finished successfully.'
-}
+   }
 }
