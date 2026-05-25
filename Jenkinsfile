@@ -250,20 +250,14 @@ stage('OWASP ZAP DAST Scan') {
     }
 
     always {
+            archiveArtifacts artifacts: 'zap-reports/**', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'security-reports/gitleaks/**', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'security-reports/sbom/**', allowEmptyArchive: true
 
-    archiveArtifacts artifacts: 'zap-reports/**', allowEmptyArchive: true
-
-    archiveArtifacts artifacts: 'security-reports/gitleaks/**', allowEmptyArchive: true
-
-    archiveArtifacts artifacts: 'security-reports/sbom/**', allowEmptyArchive: true
-
-    echo 'OWASP ZAP reports archived.'
-
-    echo 'GitLeaks secret scanning reports archived.'
-
-    echo 'SBOM reports archived.'
-
-    echo 'Pipeline finished successfully.'
-}
-}
+            echo 'OWASP ZAP reports archived.'
+            echo 'GitLeaks secret scanning reports archived.'
+            echo 'SBOM reports archived.'
+            echo 'Pipeline finished.'
+        }
+    }
 }
