@@ -65,6 +65,18 @@ stage('GitLeaks Secret Scan') {
 }
 
 
+stage('Generate SBOM with Syft') {
+    steps {
+        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+            sh '''
+            mkdir -p security-reports/sbom
+            syft . -o cyclonedx-json > security-reports/sbom/sbom-cyclonedx.json
+            '''
+        }
+    }
+}
+
+
         stage('SonarQube SAST - Fixed Non Blocking') {
     steps {
         catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
@@ -238,13 +250,19 @@ stage('OWASP ZAP DAST Scan') {
     }
 
     always {
+
     archiveArtifacts artifacts: 'zap-reports/**', allowEmptyArchive: true
 
     archiveArtifacts artifacts: 'security-reports/gitleaks/**', allowEmptyArchive: true
 
-    echo 'Security reports archived successfully.'
+    archiveArtifacts artifacts: 'security-reports/sbom/**', allowEmptyArchive: true
 
-    echo 'Pipeline finished.'
-}
+    echo 'OWASP ZAP reports archived.'
+
+    echo 'GitLeaks secret scanning reports archived.'
+
+    echo 'SBOM reports archived.'
+
+    echo 'Pipeline finished successfully.'
 }
 }
