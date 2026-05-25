@@ -225,3 +225,4 @@ stage('OWASP ZAP DAST Scan') {
         echo 'Pipeline finished.'
     }
 }
+}
