@@ -48,6 +48,23 @@ pipeline {
             }
         }
 
+stage('GitLeaks Secret Scan') {
+    steps {
+        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+            sh '''
+            mkdir -p security-reports/gitleaks
+
+            gitleaks detect \
+              --source . \
+              --redact \
+              --report-format json \
+              --report-path security-reports/gitleaks/gitleaks-report.json
+            '''
+        }
+    }
+}
+
+
         stage('SonarQube SAST - Fixed Non Blocking') {
     steps {
         catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
@@ -221,8 +238,13 @@ stage('OWASP ZAP DAST Scan') {
     }
 
     always {
-        archiveArtifacts artifacts: 'zap-reports/**', allowEmptyArchive: true
-        echo 'Pipeline finished.'
-    }
+    archiveArtifacts artifacts: 'zap-reports/**', allowEmptyArchive: true
+
+    archiveArtifacts artifacts: 'security-reports/gitleaks/**', allowEmptyArchive: true
+
+    echo 'Security reports archived successfully.'
+
+    echo 'Pipeline finished.'
+}
 }
 }
