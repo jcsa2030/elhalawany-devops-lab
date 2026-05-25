@@ -221,7 +221,7 @@ stage('OWASP ZAP DAST Scan') {
     }
 }
 
-        stage('Health Check') {
+                stage('Health Check') {
             steps {
                 sh '''
                 echo "Waiting for services to start..."
@@ -235,34 +235,35 @@ stage('OWASP ZAP DAST Scan') {
 
                 echo "Checking Redis..."
                 curl -f http://localhost:8080/api/redis-health
+
+                echo "Checking NIST API..."
+                curl -f http://localhost:8080/api/nist-summary
+
+                echo "Checking OWASP API..."
+                curl -f http://localhost:8080/api/owasp-summary
                 '''
             }
         }
     }
 
     post {
-    success {
-        echo 'DevSecOps Pipeline completed successfully.'
+        success {
+            echo 'DevSecOps Pipeline completed successfully.'
+        }
+
+        failure {
+            echo 'DevSecOps Pipeline failed. Review Jenkins logs.'
+        }
+
+        always {
+            archiveArtifacts artifacts: 'zap-reports/**', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'security-reports/gitleaks/**', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'security-reports/sbom/**', allowEmptyArchive: true
+
+            echo 'OWASP ZAP reports archived.'
+            echo 'GitLeaks secret scanning reports archived.'
+            echo 'SBOM reports archived.'
+            echo 'Pipeline finished successfully.'
+        }
     }
-
-    failure {
-        echo 'DevSecOps Pipeline failed. Review Jenkins logs.'
-    }
-
-    always {
-
-    archiveArtifacts artifacts: 'zap-reports/**', allowEmptyArchive: true
-
-    archiveArtifacts artifacts: 'security-reports/gitleaks/**', allowEmptyArchive: true
-
-    archiveArtifacts artifacts: 'security-reports/sbom/**', allowEmptyArchive: true
-
-    echo 'OWASP ZAP reports archived.'
-
-    echo 'GitLeaks secret scanning reports archived.'
-
-    echo 'SBOM reports archived.'
-
-    echo 'Pipeline finished successfully.'
-   }
 }
