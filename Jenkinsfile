@@ -166,7 +166,7 @@ EOF
             }
         }
 
-sstage('OWASP ZAP DAST Scan') {
+stage('OWASP ZAP DAST Scan') {
     steps {
         catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
             timeout(time: 15, unit: 'MINUTES') {
