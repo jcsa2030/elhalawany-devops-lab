@@ -212,16 +212,16 @@ stage('OWASP ZAP DAST Scan') {
     }
 
     post {
-        success {
-            echo 'DevSecOps Pipeline completed successfully.'
-        }
+    success {
+        echo 'DevSecOps Pipeline completed successfully.'
+    }
 
-        failure {
-            echo 'DevSecOps Pipeline failed. Review Jenkins logs.'
-        }
+    failure {
+        echo 'DevSecOps Pipeline failed. Review Jenkins logs.'
+    }
 
-        always {
-            echo 'Pipeline finished.'
-        }
+    always {
+        archiveArtifacts artifacts: 'zap-reports/**', allowEmptyArchive: true
+        echo 'Pipeline finished.'
     }
 }
