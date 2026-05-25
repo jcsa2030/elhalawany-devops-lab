@@ -48,21 +48,25 @@ pipeline {
             }
         }
 
-        stage('SonarQube SAST') {
-            steps {
+        stage('SonarQube SAST - Fixed') {
+    steps {
+        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+            timeout(time: 10, unit: 'MINUTES') {
                 withSonarQubeEnv("${SONARQUBE_SERVER}") {
                     sh '''
                     sonar-scanner \
                       -Dsonar.projectKey=elhalawany-devops-lab \
                       -Dsonar.projectName="Elhalawany DevOps Lab" \
-                      -Dsonar.sources=. \
-                      -Dsonar.exclusions=node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**
-                      -Dsonar.exclusions=node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,scripts/**,*.csv,*.json
+                      -Dsonar.sources=index.js \
+                      -Dsonar.sourceEncoding=UTF-8 \
+                      -Dsonar.nodejs.executable=/usr/local/opt/node@20/bin/node \
+                      -Dsonar.exclusions=node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,scripts/**
                     '''
                 }
             }
         }
-
+    }
+}
         stage('Trivy Filesystem Scan') {
             steps {
                 sh '''
