@@ -1,0 +1,11 @@
+id,category,description,security_test
+A01,Broken Access Control,Access control failures,SAST/DAST/Manual Review
+A02,Cryptographic Failures,Weak encryption or sensitive data exposure,SAST/Manual Review
+A03,Injection,SQL NoSQL and command injection,SAST/DAST/Manual Review
+A04,Insecure Design,Design flaws and missing threat modeling,Manual Review
+A05,Security Misconfiguration,Hardening and configuration issues,Trivy/DAST/Manual Review
+A06,Vulnerable and Outdated Components,Dependency vulnerabilities,npm audit/Trivy
+A07,Identification and Authentication Failures,Weak authentication and session management,SAST/DAST/Manual Review
+A08,Software and Data Integrity Failures,CI CD and dependency integrity issues,SAST/Trivy/Manual Review
+A09,Security Logging and Monitoring Failures,Insufficient logging and monitoring,Manual Review
+A10,Server-Side Request Forgery,SSRF risks,SAST/DAST/Manual Review
