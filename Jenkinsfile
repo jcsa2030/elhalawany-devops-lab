@@ -166,24 +166,31 @@ EOF
             }
         }
 
-stage('OWASP ZAP DAST Scan') {
+sstage('OWASP ZAP DAST Scan') {
     steps {
         catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-            timeout(time: 10, unit: 'MINUTES') {
+            timeout(time: 15, unit: 'MINUTES') {
                 sh '''
                 echo "Starting OWASP ZAP Baseline Scan..."
 
+                mkdir -p zap-reports
+
                 docker run --rm \
+                  -v "$(pwd)/zap-reports:/zap/wrk:rw" \
                   -t ghcr.io/zaproxy/zaproxy:stable \
                   zap-baseline.py \
                   -t http://host.docker.internal:8080 \
-                  -r zap-report.html
+                  -r zap-report.html \
+                  -J zap-report.json \
+                  -I
+
+                echo "OWASP ZAP reports generated:"
+                ls -la zap-reports
                 '''
             }
         }
     }
 }
-
 
         stage('Health Check') {
             steps {
