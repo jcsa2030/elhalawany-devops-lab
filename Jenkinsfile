@@ -224,32 +224,27 @@ stage('OWASP ZAP DAST Scan') {
         stage('Health Check') {
             steps {
                 sh '''
-                echo "Waiting for services to start..."
-                sleep 25
-
-                echo "Checking main application..."
+                sleep 20
                 curl -f http://localhost:8080/health
-
-                echo "Checking PostgreSQL..."
                 curl -f http://localhost:8080/api/db-health
-
-                echo "Checking Redis..."
                 curl -f http://localhost:8080/api/redis-health
+                curl -f http://localhost:8080/api/nist-summary
+                curl -f http://localhost:8080/api/owasp-summary
                 '''
             }
         }
     }
 
     post {
-    success {
-        echo 'DevSecOps Pipeline completed successfully.'
-    }
+        success {
+            echo 'DevSecOps Security Pipeline completed successfully.'
+        }
 
-    failure {
-        echo 'DevSecOps Pipeline failed. Review Jenkins logs.'
-    }
+        failure {
+            echo 'DevSecOps Security Pipeline failed. Review Jenkins logs.'
+        }
 
-    always {
+        always {
             archiveArtifacts artifacts: 'zap-reports/**', allowEmptyArchive: true
             archiveArtifacts artifacts: 'security-reports/gitleaks/**', allowEmptyArchive: true
             archiveArtifacts artifacts: 'security-reports/sbom/**', allowEmptyArchive: true
