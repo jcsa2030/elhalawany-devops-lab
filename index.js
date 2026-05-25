@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 3000;
 const APP_NAME = process.env.APP_NAME || 'Elhalawany DevOps Lab';
 const APP_ENV = process.env.APP_ENV || nodeEnv;
 const APP_COLOR = process.env.APP_COLOR || '#38bdf8';
-const APP_MESSAGE = process.env.APP_MESSAGE || 'Multi-Tier DevOps Application';
+const APP_MESSAGE = process.env.APP_MESSAGE || 'Multi-Tier DevSecOps Application';
 
 app.use(helmet());
 app.use(cors());
@@ -72,6 +72,7 @@ const dashboardData = {
         jenkins: 65,
         security: 60,
         nist: 70,
+        owasp: 70,
         kubernetes: 40
     },
     test: {
@@ -82,7 +83,19 @@ const dashboardData = {
         jenkins: 75,
         security: 75,
         nist: 80,
+        owasp: 80,
         kubernetes: 60
+    },
+    security: {
+        docker: 95,
+        nginx: 90,
+        database: 85,
+        redis: 85,
+        jenkins: 85,
+        security: 95,
+        nist: 90,
+        owasp: 95,
+        kubernetes: 70
     },
     production: {
         docker: 100,
@@ -92,20 +105,21 @@ const dashboardData = {
         jenkins: 90,
         security: 90,
         nist: 90,
+        owasp: 90,
         kubernetes: 85
     }
 };
 
 const currentMetrics = dashboardData[APP_ENV] || dashboardData.dev;
 
-/* Read NIST CSV */
-function readNistCsv() {
+/* Generic CSV Reader */
+function readCsvFile(relativePath, label) {
     return new Promise((resolve, reject) => {
         const results = [];
-        const filePath = path.join(__dirname, 'compliance', 'nist', 'NIST-CSF.csv');
+        const filePath = path.join(__dirname, relativePath);
 
         if (!fs.existsSync(filePath)) {
-            return reject(new Error(`NIST CSV file not found at ${filePath}`));
+            return reject(new Error(`${label} CSV file not found at ${filePath}`));
         }
 
         fs.createReadStream(filePath)
@@ -114,6 +128,15 @@ function readNistCsv() {
             .on('end', () => resolve(results))
             .on('error', reject);
     });
+}
+
+/* CSV Helpers */
+function readNistCsv() {
+    return readCsvFile(path.join('compliance', 'nist', 'NIST-CSF.csv'), 'NIST');
+}
+
+function readOwaspCsv() {
+    return readCsvFile(path.join('compliance', 'owasp', 'OWASP-Top10.csv'), 'OWASP');
 }
 
 /* Home Page */
@@ -157,8 +180,9 @@ header {
 nav a {
     color: white;
     text-decoration: none;
-    margin-left: 16px;
+    margin-left: 14px;
     font-weight: bold;
+    font-size: 14px;
 }
 
 nav a:hover {
@@ -202,7 +226,7 @@ nav a:hover {
     display: inline-block;
     background: ${APP_COLOR};
     color: #020617;
-    padding: 15px 28px;
+    padding: 15px 24px;
     border-radius: 10px;
     text-decoration: none;
     font-weight: bold;
@@ -293,8 +317,8 @@ footer {
     }
 
     nav a {
-        margin: 0 8px;
-        font-size: 14px;
+        margin: 0 6px;
+        font-size: 13px;
     }
 
     .hero {
@@ -324,8 +348,8 @@ footer {
         <a href="/api/dashboard">Dashboard</a>
         <a href="/api/db-health">PostgreSQL</a>
         <a href="/api/redis-health">Redis</a>
-        <a href="/api/nist-summary">NIST Summary</a>
-        <a href="/api/nist-controls">NIST Controls</a>
+        <a href="/api/nist-summary">NIST</a>
+        <a href="/api/owasp-summary">OWASP</a>
         <a href="/about">About</a>
     </nav>
 </header>
@@ -333,15 +357,15 @@ footer {
 <section class="hero">
     <div>
         <span class="badge">Environment: ${APP_ENV.toUpperCase()}</span>
-        <h1>Enterprise Multi-Tier DevOps Architecture Lab</h1>
+        <h1>Enterprise Multi-Tier DevSecOps Architecture Lab</h1>
         <p>${APP_MESSAGE}</p>
         <p>
-            Browser → NGINX → Node.js Express → PostgreSQL + Redis + NIST Controls API
+            Browser → NGINX → Node.js Express → PostgreSQL + Redis + NIST API + OWASP API
         </p>
-        <a class="btn" href="/api/db-health">Check PostgreSQL</a>
-        <a class="btn" href="/api/redis-health">Check Redis</a>
+        <a class="btn" href="/api/db-health">PostgreSQL</a>
+        <a class="btn" href="/api/redis-health">Redis</a>
         <a class="btn" href="/api/nist-summary">NIST Summary</a>
-        <a class="btn" href="/api/nist-controls">NIST Controls</a>
+        <a class="btn" href="/api/owasp-summary">OWASP Summary</a>
     </div>
 
     <div>
@@ -375,13 +399,18 @@ footer {
 
         <div class="card">
             <h3>NIST Controls API</h3>
-            <p>Reads NIST CSV controls from the project and exposes them through REST API.</p>
+            <p>Reads NIST CSF CSV controls from the project and exposes them through REST API.</p>
+        </div>
+
+        <div class="card">
+            <h3>OWASP Top 10 API</h3>
+            <p>Reads OWASP Top 10 CSV data and exposes it through REST API for security validation.</p>
         </div>
     </div>
 </section>
 
 <section class="section">
-    <h2>DevOps Dashboard</h2>
+    <h2>DevSecOps Dashboard</h2>
 
     <div class="grid">
         <div class="card">
@@ -421,6 +450,11 @@ footer {
                 <span><b>NIST API</b><b>${currentMetrics.nist}%</b></span>
                 <div class="progress"><div style="width:${currentMetrics.nist}%"></div></div>
             </div>
+
+            <div class="progress-box">
+                <span><b>OWASP API</b><b>${currentMetrics.owasp}%</b></span>
+                <div class="progress"><div style="width:${currentMetrics.owasp}%"></div></div>
+            </div>
         </div>
 
         <div class="card">
@@ -433,12 +467,14 @@ footer {
             <p><b>Redis API:</b> /api/redis-health</p>
             <p><b>NIST Summary:</b> /api/nist-summary</p>
             <p><b>NIST Controls:</b> /api/nist-controls</p>
+            <p><b>OWASP Summary:</b> /api/owasp-summary</p>
+            <p><b>OWASP Top 10:</b> /api/owasp-top10</p>
         </div>
     </div>
 </section>
 
 <footer>
-    © 2026 Elhalawany Multi-Tier DevOps Lab | Node.js, Express, NGINX, PostgreSQL, Redis, Docker, NIST
+    © 2026 Elhalawany Multi-Tier DevSecOps Lab | Node.js, Express, NGINX, PostgreSQL, Redis, Docker, NIST, OWASP
 </footer>
 
 </body>
@@ -528,7 +564,8 @@ app.get('/api/nist-controls', async (req, res) => {
             framework: 'NIST CSF',
             file: 'compliance/nist/NIST-CSF.csv',
             total_controls: controls.length,
-            controls
+            controls,
+            timestamp: new Date().toISOString()
         });
     } catch (error) {
         res.status(500).json({
@@ -565,6 +602,54 @@ app.get('/api/nist-summary', async (req, res) => {
     }
 });
 
+/* OWASP Top 10 API */
+app.get('/api/owasp-top10', async (req, res) => {
+    try {
+        const items = await readOwaspCsv();
+
+        res.json({
+            status: 'UP',
+            framework: 'OWASP Top 10',
+            file: 'compliance/owasp/OWASP-Top10.csv',
+            total_items: items.length,
+            items,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 'ERROR',
+            framework: 'OWASP Top 10',
+            message: 'Failed to read OWASP CSV file',
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+/* OWASP Summary API */
+app.get('/api/owasp-summary', async (req, res) => {
+    try {
+        const items = await readOwaspCsv();
+
+        res.json({
+            status: 'UP',
+            framework: 'OWASP Top 10',
+            file: 'compliance/owasp/OWASP-Top10.csv',
+            total_items: items.length,
+            sample_items: items.slice(0, 5),
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 'ERROR',
+            framework: 'OWASP Top 10',
+            message: 'Failed to summarize OWASP CSV file',
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 /* Dashboard API */
 app.get('/api/dashboard', (req, res) => {
     res.json({
@@ -575,9 +660,14 @@ app.get('/api/dashboard', (req, res) => {
             application_tier: 'Node.js + Express',
             database_tier: 'PostgreSQL',
             cache_tier: 'Redis',
-            compliance_reference: 'NIST CSV API',
+            compliance_reference: 'NIST CSF API',
+            security_reference: 'OWASP Top 10 API',
             security_tier: 'Helmet + CORS + Morgan'
         },
+        security_frameworks: [
+            'NIST CSF',
+            'OWASP Top 10'
+        ],
         metrics: currentMetrics,
         available_routes: [
             '/',
@@ -587,6 +677,8 @@ app.get('/api/dashboard', (req, res) => {
             '/api/redis-health',
             '/api/nist-controls',
             '/api/nist-summary',
+            '/api/owasp-top10',
+            '/api/owasp-summary',
             '/about'
         ],
         status: 'Running',
@@ -627,8 +719,8 @@ a {
 <body>
 <div class="card">
     <h1>About ${APP_NAME}</h1>
-    <p>This is a multi-tier DevOps lab application.</p>
-    <p><b>Architecture:</b> Browser → NGINX → Node.js → PostgreSQL + Redis + NIST CSV API</p>
+    <p>This is a multi-tier DevSecOps lab application.</p>
+    <p><b>Architecture:</b> Browser → NGINX → Node.js → PostgreSQL + Redis + NIST API + OWASP API</p>
     <p><b>Environment:</b> ${APP_ENV.toUpperCase()}</p>
     <a href="/">Back to Home</a>
 </div>
@@ -651,6 +743,8 @@ app.use((req, res) => {
             '/api/redis-health',
             '/api/nist-controls',
             '/api/nist-summary',
+            '/api/owasp-top10',
+            '/api/owasp-summary',
             '/about'
         ]
     });
@@ -663,4 +757,6 @@ app.listen(PORT, () => {
     console.log('Redis route enabled: /api/redis-health');
     console.log('NIST controls route enabled: /api/nist-controls');
     console.log('NIST summary route enabled: /api/nist-summary');
+    console.log('OWASP route enabled: /api/owasp-top10');
+    console.log('OWASP summary route enabled: /api/owasp-summary');
 });
