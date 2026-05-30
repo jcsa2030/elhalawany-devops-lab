@@ -76,6 +76,28 @@ stage('Generate SBOM with Syft') {
     }
 }
 
+stage('Upload SBOM to Dependency-Track') {
+    steps {
+        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+            withCredentials([string(credentialsId: 'dependency-track-api-key', variable: 'DTRACK_API_KEY')]) {
+                sh '''
+                echo "Uploading SBOM to Dependency-Track..."
+
+                curl -X POST http://localhost:8085/api/v1/bom \
+                  -H "X-Api-Key: ${DTRACK_API_KEY}" \
+                  -F "autoCreate=true" \
+                  -F "projectName=elhalawany-devops-lab" \
+                  -F "projectVersion=security" \
+                  -F "bom=@security-reports/sbom/sbom-cyclonedx.json"
+
+                echo "SBOM upload submitted to Dependency-Track."
+                '''
+            }
+        }
+    }
+}
+
+
 
         stage('SonarQube SAST - Fixed Non Blocking') {
     steps {
