@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "devsecops-app"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["host.docker.internal:8080"]
+
+  - job_name: "sonarqube"
+    static_configs:
+      - targets: ["host.docker.internal:9000"]
+
+  - job_name: "dependency-track"
+    static_configs:
+      - targets: ["host.docker.internal:8085"]

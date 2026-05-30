@@ -1,4 +1,5 @@
 const express = require('express');
+const client = require('prom-client');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -16,6 +17,19 @@ dotenv.config({
 });
 
 const app = express();
+const register = new client.Registry();
+
+client.collectDefaultMetrics({
+    register
+});
+
+const httpRequestCounter = new client.Counter({
+    name: 'devsecops_http_requests_total',
+    help: 'Total HTTP requests',
+    labelNames: ['method', 'route', 'status']
+});
+
+register.registerMetric(httpRequestCounter);
 
 const PORT = process.env.PORT || 3000;
 const APP_NAME = process.env.APP_NAME || 'Elhalawany DevOps Lab';
@@ -27,6 +41,21 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(morgan(APP_ENV === 'production' ? 'combined' : 'dev'));
+
+app.use((req, res, next) => {
+
+    res.on('finish', () => {
+
+        httpRequestCounter.inc({
+            method: req.method,
+            route: req.path,
+            status: res.statusCode
+        });
+
+    });
+
+    next();
+});
 
 /* PostgreSQL */
 const pool = new Pool({
@@ -446,6 +475,11 @@ a {
     `);
 });
 
+app.get('/metrics', async (req, res) => {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+});
+
 /* 404 Handler */
 app.use((req, res) => {
     res.status(404).json({
@@ -466,6 +500,7 @@ app.use((req, res) => {
         ]
     });
 });
+
 
 /* Start Server */
 app.listen(PORT, () => {
