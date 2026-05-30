@@ -1,0 +1,63 @@
+groups:
+  - name: devsecops-availability-alerts
+    rules:
+
+      - alert: DevSecOpsApplicationDown
+        expr: probe_success{instance="http://host.docker.internal:8080"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: devsecops-app
+        annotations:
+          summary: "DevSecOps Application is DOWN"
+          description: "The DevSecOps application on port 8080 is not responding."
+
+      - alert: JenkinsDown
+        expr: probe_success{instance="http://host.docker.internal:8081"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: jenkins
+        annotations:
+          summary: "Jenkins is DOWN"
+          description: "Jenkins on port 8081 is not responding."
+
+      - alert: SonarQubeDown
+        expr: probe_success{instance="http://host.docker.internal:9000"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: sonarqube
+        annotations:
+          summary: "SonarQube is DOWN"
+          description: "SonarQube on port 9000 is not responding."
+
+      - alert: DependencyTrackApiDown
+        expr: probe_success{instance="http://host.docker.internal:8085"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: dependency-track-api
+        annotations:
+          summary: "Dependency-Track API is DOWN"
+          description: "Dependency-Track API on port 8085 is not responding."
+
+      - alert: DependencyTrackFrontendDown
+        expr: probe_success{instance="http://host.docker.internal:8086"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: dependency-track-frontend
+        annotations:
+          summary: "Dependency-Track Frontend is DOWN"
+          description: "Dependency-Track Frontend on port 8086 is not responding."
+
+      - alert: GrafanaDown
+        expr: probe_success{instance="http://host.docker.internal:3001"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          service: grafana
+        annotations:
+          summary: "Grafana is DOWN"
+          description: "Grafana on port 3001 is not responding."
