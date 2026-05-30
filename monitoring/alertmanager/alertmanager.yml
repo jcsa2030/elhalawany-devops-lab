@@ -7,7 +7,7 @@ route:
 receivers:
   - name: 'slack-alerts'
     slack_configs:
-      - api_url: 'PT0B6QKLBF0F/B0B79NNG7RA/oUp2BzEAbq6aKbceQETVhDyC'
+      - api_url: 'T0B6QKLBF0F/B0B79NNG7RA/oUp2BzEAbq6aKbceQETVhDyC'
         channel: '#devsecops-alerts'
         send_resolved: true
         title: 'DevSecOps Alert'

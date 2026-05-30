@@ -28,3 +28,4 @@ coverage/
 
 # Docker
 *.tar
+monitoring/alertmanager/alertmanager.local.yml
