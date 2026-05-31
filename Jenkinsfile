@@ -313,3 +313,4 @@ stage('OWASP ZAP DAST Scan') {
             echo 'Trivy reports archived successfully.'
         }
     }
+}
