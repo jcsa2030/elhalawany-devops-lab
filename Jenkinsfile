@@ -76,26 +76,38 @@ stage('Generate SBOM with Syft') {
     }
 }
 
-stage('Upload SBOM to Dependency-Track') {
-    steps {
-        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-            withCredentials([string(credentialsId: 'dependency-track-api-key', variable: 'DTRACK_API_KEY')]) {
-                sh '''
-                echo "Uploading SBOM to Dependency-Track..."
+        stage('Upload SBOM to Dependency-Track') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    withCredentials([string(credentialsId: 'vault-jenkins-token', variable: 'VAULT_TOKEN')]) {
+                        sh '''
+                        echo "Reading Dependency-Track API key from Vault..."
 
-                curl -X POST http://localhost:8085/api/v1/bom \
-                  -H "X-Api-Key: ${DTRACK_API_KEY}" \
-                  -F "autoCreate=true" \
-                  -F "projectName=elhalawany-devops-lab" \
-                  -F "projectVersion=security" \
-                  -F "bom=@security-reports/sbom/sbom-cyclonedx.json"
+                        DTRACK_API_KEY=$(curl -s \
+                          -H "X-Vault-Token: ${VAULT_TOKEN}" \
+                          http://127.0.0.1:8200/v1/secret/data/devsecops/dependency-track \
+                          | jq -r '.data.data.API_KEY')
 
-                echo "SBOM upload submitted to Dependency-Track."
-                '''
+                        if [ -z "$DTRACK_API_KEY" ] || [ "$DTRACK_API_KEY" = "null" ]; then
+                            echo "ERROR: Failed to read Dependency-Track API key from Vault."
+                            exit 1
+                        fi
+
+                        echo "Uploading SBOM to Dependency-Track..."
+
+                        curl -X POST http://localhost:8085/api/v1/bom \
+                          -H "X-Api-Key: ${DTRACK_API_KEY}" \
+                          -F "autoCreate=true" \
+                          -F "projectName=elhalawany-devops-lab" \
+                          -F "projectVersion=security" \
+                          -F "bom=@security-reports/sbom/sbom-cyclonedx.json"
+
+                        echo "SBOM upload submitted to Dependency-Track using Vault secret."
+                        '''
+                    }
+                }
             }
         }
-    }
-}
 
 stage('OPA Policy Gate') {
     steps {
