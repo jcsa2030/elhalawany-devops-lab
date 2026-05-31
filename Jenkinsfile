@@ -118,15 +118,27 @@ stage('Upload SBOM to Dependency-Track') {
         }
     }
 }
-        stage('Trivy Filesystem Scan') {
+                stage('Trivy Filesystem Scan') {
             steps {
-                sh '''
-                trivy fs \
-                  --scanners vuln,secret,misconfig \
-                  --severity HIGH,CRITICAL \
-                  --exit-code 0 \
-                  .
-                '''
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    sh '''
+                    mkdir -p security-reports/trivy
+
+                    trivy fs \
+                      --scanners vuln,secret,misconfig \
+                      --severity HIGH,CRITICAL \
+                      --format table \
+                      --output security-reports/trivy/trivy-fs-report.txt \
+                      .
+
+                    trivy fs \
+                      --scanners vuln,secret,misconfig \
+                      --severity HIGH,CRITICAL \
+                      --format json \
+                      --output security-reports/trivy/trivy-fs-report.json \
+                      .
+                    '''
+                }
             }
         }
 
@@ -139,14 +151,25 @@ stage('Upload SBOM to Dependency-Track') {
             }
         }
 
-        stage('Trivy Image Scan') {
+                stage('Trivy Image Scan') {
             steps {
-                sh '''
-                trivy image \
-                  --severity HIGH,CRITICAL \
-                  --exit-code 0 \
-                  ${IMAGE_NAME}
-                '''
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    sh '''
+                    mkdir -p security-reports/trivy
+
+                    trivy image \
+                      --severity HIGH,CRITICAL \
+                      --format table \
+                      --output security-reports/trivy/trivy-image-report.txt \
+                      ${IMAGE_NAME}
+
+                    trivy image \
+                      --severity HIGH,CRITICAL \
+                      --format json \
+                      --output security-reports/trivy/trivy-image-report.json \
+                      ${IMAGE_NAME}
+                    '''
+                }
             }
         }
 
@@ -281,6 +304,7 @@ stage('OWASP ZAP DAST Scan') {
             archiveArtifacts artifacts: 'zap-reports/**', allowEmptyArchive: true
             archiveArtifacts artifacts: 'security-reports/gitleaks/**', allowEmptyArchive: true
             archiveArtifacts artifacts: 'security-reports/sbom/**', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'security-reports/trivy/**', allowEmptyArchive: true
 
             echo 'OWASP ZAP reports archived.'
             echo 'GitLeaks secret scanning reports archived.'
