@@ -1,0 +1,14 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: 'slack-alerts'
+
+receivers:
+  - name: 'slack-alerts'
+    slack_configs:
+      - api_url: 'T0B6QKLBF0F/B0B79NNG7RA/oUp2BzEAbq6aKbceQETVhDyC'
+        channel: '#devsecops-alerts'
+        send_resolved: true
+        title: 'DevSecOps Alert'
+        text: '{{ range .Alerts }}{{ .Annotations.summary }} - {{ .Labels.severity }}{{ end }}'

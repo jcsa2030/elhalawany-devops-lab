@@ -28,3 +28,5 @@ coverage/
 
 # Docker
 *.tar
+monitoring/alertmanager/alertmanager.local.yml
+security-reports/trivy/

@@ -1,0 +1,7 @@
+{
+  "image_tag": "security",
+  "environment": "security",
+  "approved": true,
+  "security_headers_enabled": true,
+  "trivy_scan_enabled": true
+}

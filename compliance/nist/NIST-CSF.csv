@@ -1,1 +1,13 @@
-404: Not Found
+framework,function,category,subcategory_id,subcategory,description
+NIST CSF 2.0,Govern,GV.OC,GV.OC-01,Organizational Context,The organizational mission is understood and informs cybersecurity risk management.
+NIST CSF 2.0,Govern,GV.RM,GV.RM-01,Risk Management Strategy,Risk management objectives are established and agreed to by stakeholders.
+NIST CSF 2.0,Govern,GV.RR,GV.RR-01,Roles and Responsibilities,Cybersecurity roles responsibilities and authorities are established and communicated.
+NIST CSF 2.0,Identify,ID.AM,ID.AM-01,Asset Inventory,Physical devices and systems are inventoried.
+NIST CSF 2.0,Identify,ID.AM,ID.AM-02,Software Inventory,Software platforms and applications are inventoried.
+NIST CSF 2.0,Identify,ID.RA,ID.RA-01,Risk Assessment,Vulnerabilities in assets are identified and documented.
+NIST CSF 2.0,Protect,PR.AA,PR.AA-01,Identity Management,Identities and credentials are managed for authorized users services and hardware.
+NIST CSF 2.0,Protect,PR.DS,PR.DS-01,Data Security,Data at rest is protected.
+NIST CSF 2.0,Protect,PR.PS,PR.PS-01,Platform Security,Configuration management practices are established and applied.
+NIST CSF 2.0,Detect,DE.CM,DE.CM-01,Continuous Monitoring,Networks and network services are monitored to find potentially adverse events.
+NIST CSF 2.0,Respond,RS.MA,RS.MA-01,Incident Management,The incident response plan is executed in coordination with relevant stakeholders.
+NIST CSF 2.0,Recover,RC.RP,RC.RP-01,Recovery Plan,The recovery portion of the incident response plan is executed after a cybersecurity incident.
