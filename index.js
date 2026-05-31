@@ -370,6 +370,35 @@ app.get('/api/dashboard', (req, res) => {
     });
 });
 
+app.get('/api/customers', (req, res) => {
+    res.json({
+        status: 'success',
+        count: 3,
+        customers: [
+            {
+                id: 1,
+                name: 'Customer One',
+                segment: 'Enterprise',
+                status: 'active'
+            },
+            {
+                id: 2,
+                name: 'Customer Two',
+                segment: 'SME',
+                status: 'active'
+            },
+            {
+                id: 3,
+                name: 'Customer Three',
+                segment: 'Startup',
+                status: 'inactive'
+            }
+        ],
+        timestamp: new Date().toISOString()
+    });
+});
+
+
 /* Simple Home Page */
 app.get('/', (req, res) => {
     res.send(`
@@ -496,6 +525,7 @@ app.use((req, res) => {
             '/api/nist-summary',
             '/api/owasp-top10',
             '/api/owasp-summary',
+            '/api/customers',
             '/about'
         ]
     });
