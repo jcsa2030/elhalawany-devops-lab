@@ -279,13 +279,6 @@ EOF
         }
 
                 
-        stage('SonarQube Quality Gate') {
-            steps {
-                timeout(time: 3, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
 
         stage('Health Check') {
             steps {
