@@ -118,7 +118,7 @@ stage('Upload SBOM to Dependency-Track') {
         }
     }
 }
-                stage('Trivy Filesystem Scan') {
+                        stage('Trivy Filesystem Scan') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     sh '''
@@ -140,7 +140,7 @@ stage('Upload SBOM to Dependency-Track') {
                     '''
                 }
             }
-        
+        }
 
         stage('Docker Build') {
             steps {
@@ -149,9 +149,9 @@ stage('Upload SBOM to Dependency-Track') {
                 docker build -t ${IMAGE_NAME} .
                 '''
             }
-        
+        }
 
-                stage('Trivy Image Scan') {
+        stage('Trivy Image Scan') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     sh '''
@@ -240,33 +240,33 @@ EOF
             }
         }
 
-stage('OWASP ZAP DAST Scan') {
-    steps {
-        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-            timeout(time: 15, unit: 'MINUTES') {
-                sh '''
-                echo "Starting OWASP ZAP Baseline Scan..."
+        stage('OWASP ZAP DAST Scan') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    timeout(time: 15, unit: 'MINUTES') {
+                        sh '''
+                        echo "Starting OWASP ZAP Baseline Scan..."
 
-                mkdir -p zap-reports
+                        mkdir -p zap-reports
 
-                docker run --rm \
-                  -v "$(pwd)/zap-reports:/zap/wrk:rw" \
-                  -t ghcr.io/zaproxy/zaproxy:stable \
-                  zap-baseline.py \
-                  -t http://host.docker.internal:8080 \
-                  -r zap-report.html \
-                  -J zap-report.json \
-                  -I
+                        docker run --rm \
+                          -v "$(pwd)/zap-reports:/zap/wrk:rw" \
+                          -t ghcr.io/zaproxy/zaproxy:stable \
+                          zap-baseline.py \
+                          -t http://host.docker.internal:8080 \
+                          -r zap-report.html \
+                          -J zap-report.json \
+                          -I
 
-                echo "OWASP ZAP reports generated:"
-                ls -la zap-reports
-                '''
+                        echo "OWASP ZAP reports generated:"
+                        ls -la zap-reports
+                        '''
+                    }
+                }
             }
         }
-    }
-}
 
-                stage('Health Check') {
+        stage('Health Check') {
             steps {
                 sh '''
                 echo "Waiting for services to start..."
@@ -288,7 +288,7 @@ stage('OWASP ZAP DAST Scan') {
                 curl -f http://localhost:8080/api/owasp-summary
                 '''
             }
-        
+        }
     }
 
     post {
@@ -309,8 +309,8 @@ stage('OWASP ZAP DAST Scan') {
             echo 'OWASP ZAP reports archived.'
             echo 'GitLeaks secret scanning reports archived.'
             echo 'SBOM reports archived.'
-            echo 'Pipeline finished successfully.'
             echo 'Trivy reports archived successfully.'
+            echo 'Pipeline finished successfully.'
         }
     }
 }
