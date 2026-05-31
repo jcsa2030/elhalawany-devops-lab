@@ -131,25 +131,31 @@ stage('OPA Policy Gate') {
     }
 }
 
-        stage('SonarQube SAST - Fixed Non Blocking') {
-          steps {
-              catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-              timeout(time: 5, unit: 'MINUTES') {
-                withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    sh '''
-                    sonar-scanner \
-                      -Dsonar.projectKey=elhalawany-devops-lab \
-                      -Dsonar.projectName="Elhalawany DevOps Lab" \
-                      -Dsonar.sources=. \
-                      -Dsonar.sourceEncoding=UTF-8 \
-                      -Dsonar.nodejs.executable=/usr/local/opt/node@20/bin/node \
-                      -Dsonar.exclusions=index.js,node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,scripts/**,*.csv,*.json
-                    '''
+                stage('SonarQube SAST') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                        sh '''
+                        sonar-scanner \
+                          -Dsonar.projectKey=elhalawany-devops-lab \
+                          -Dsonar.projectName="Elhalawany DevOps Lab" \
+                          -Dsonar.sources=. \
+                          -Dsonar.sourceEncoding=UTF-8 \
+                          -Dsonar.nodejs.executable=/usr/local/opt/node@20/bin/node \
+                          -Dsonar.exclusions=index.js,node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,scripts/**,security-reports/**,zap-reports/**,*.csv,*.json
+                        '''
+                    }
                 }
             }
         }
-    }
-}
+
+        stage('SonarQube Quality Gate') {
+            steps {
+                timeout(time: 3, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
                         stage('Trivy Filesystem Scan') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
@@ -272,25 +278,14 @@ EOF
             }
         }
 
-        stage('SonarQube SAST - Fixed Non Blocking!!') {
-    steps {
-        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-            timeout(time: 5, unit: 'MINUTES') {
-                withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    sh '''
-                    sonar-scanner \
-                      -Dsonar.projectKey=elhalawany-devops-lab \
-                      -Dsonar.projectName="Elhalawany DevOps Lab" \
-                      -Dsonar.sources=. \
-                      -Dsonar.sourceEncoding=UTF-8 \
-                      -Dsonar.nodejs.executable=/usr/local/opt/node@20/bin/node \
-                      -Dsonar.exclusions=index.js,node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,scripts/**,security-reports/**,zap-reports/**,*.csv,*.json
-                    '''
+                
+        stage('SonarQube Quality Gate') {
+            steps {
+                timeout(time: 3, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
-    }
-}
 
         stage('Health Check') {
             steps {
