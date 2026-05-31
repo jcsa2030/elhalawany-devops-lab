@@ -97,7 +97,27 @@ stage('Upload SBOM to Dependency-Track') {
     }
 }
 
+stage('OPA Policy Gate') {
+    steps {
+        sh '''
+        echo "Running OPA policy validation..."
 
+        opa eval \
+          --format pretty \
+          --data policies/opa/devsecops-policy.rego \
+          --input policies/opa/input.json \
+          "data.devsecops.deny" | tee policies/opa/opa-result.txt
+
+        if grep -q "Docker image tag must not be latest\\|Production deployment requires approval\\|Security headers must be enabled\\|Trivy scan must be enabled" policies/opa/opa-result.txt; then
+            echo "OPA policy violations found."
+            cat policies/opa/opa-result.txt
+            exit 1
+        fi
+
+        echo "OPA policy validation passed."
+        '''
+    }
+}
 
         stage('SonarQube SAST - Fixed Non Blocking') {
     steps {
@@ -299,6 +319,7 @@ EOF
             archiveArtifacts artifacts: 'security-reports/gitleaks/**', allowEmptyArchive: true
             archiveArtifacts artifacts: 'security-reports/sbom/**', allowEmptyArchive: true
             archiveArtifacts artifacts: 'security-reports/trivy/**', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'policies/opa/**', allowEmptyArchive: true
 
             echo 'OWASP ZAP reports archived.'
             echo 'GitLeaks secret scanning reports archived.'
