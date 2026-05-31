@@ -240,31 +240,25 @@ EOF
             }
         }
 
-        stage('OWASP ZAP DAST Scan') {
-            steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                    timeout(time: 15, unit: 'MINUTES') {
-                        sh '''
-                        echo "Starting OWASP ZAP Baseline Scan..."
-
-                        mkdir -p zap-reports
-
-                        docker run --rm \
-                          -v "$(pwd)/zap-reports:/zap/wrk:rw" \
-                          -t ghcr.io/zaproxy/zaproxy:stable \
-                          zap-baseline.py \
-                          -t http://host.docker.internal:8080 \
-                          -r zap-report.html \
-                          -J zap-report.json \
-                          -I
-
-                        echo "OWASP ZAP reports generated:"
-                        ls -la zap-reports
-                        '''
-                    }
+        stage('SonarQube SAST - Fixed Non Blocking') {
+    steps {
+        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+            timeout(time: 5, unit: 'MINUTES') {
+                withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                    sh '''
+                    sonar-scanner \
+                      -Dsonar.projectKey=elhalawany-devops-lab \
+                      -Dsonar.projectName="Elhalawany DevOps Lab" \
+                      -Dsonar.sources=. \
+                      -Dsonar.sourceEncoding=UTF-8 \
+                      -Dsonar.nodejs.executable=/usr/local/opt/node@20/bin/node \
+                      -Dsonar.exclusions=index.js,node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,scripts/**,security-reports/**,zap-reports/**,*.csv,*.json
+                    '''
                 }
             }
         }
+    }
+}
 
         stage('Health Check') {
             steps {
