@@ -140,7 +140,7 @@ stage('Upload SBOM to Dependency-Track') {
                     '''
                 }
             }
-        }
+        
 
         stage('Docker Build') {
             steps {
@@ -149,7 +149,7 @@ stage('Upload SBOM to Dependency-Track') {
                 docker build -t ${IMAGE_NAME} .
                 '''
             }
-        }
+        
 
                 stage('Trivy Image Scan') {
             steps {
@@ -310,5 +310,6 @@ stage('OWASP ZAP DAST Scan') {
             echo 'GitLeaks secret scanning reports archived.'
             echo 'SBOM reports archived.'
             echo 'Pipeline finished successfully.'
+            echo 'Trivy reports archived successfully.'
         }
     }
