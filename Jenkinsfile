@@ -120,9 +120,9 @@ stage('OPA Policy Gate') {
 }
 
         stage('SonarQube SAST - Fixed Non Blocking') {
-    steps {
-        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-            timeout(time: 5, unit: 'MINUTES') {
+          steps {
+              catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+              timeout(time: 5, unit: 'MINUTES') {
                 withSonarQubeEnv("${SONARQUBE_SERVER}") {
                     sh '''
                     sonar-scanner \
@@ -260,7 +260,7 @@ EOF
             }
         }
 
-        stage('SonarQube SAST - Fixed Non Blocking') {
+        stage('SonarQube SAST - Fixed Non Blocking!!') {
     steps {
         catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
             timeout(time: 5, unit: 'MINUTES') {
