@@ -265,7 +265,7 @@ stage('OWASP ZAP DAST Scan') {
                 curl -f http://localhost:8080/api/owasp-summary
                 '''
             }
-        }
+        
     }
 
     post {
