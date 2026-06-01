@@ -8,10 +8,13 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME = 'elhalawany-devops-app:latest'
-        SONARQUBE_SERVER = 'SonarQube'
-        PATH = "/usr/local/bin:/usr/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin:${env.PATH}"
-    }
+    IMAGE_NAME = 'elhalawany-devops-app:latest'
+    LOCAL_IMAGE = 'elhalawany-devops-app:latest'
+    GHCR_IMAGE = 'ghcr.io/jcsa2030/elhalawany-devops-lab'
+    DEPLOY_IMAGE = 'ghcr.io/jcsa2030/elhalawany-devops-lab:security'
+    SONARQUBE_SERVER = 'SonarQube'
+    PATH = "/usr/local/bin:/usr/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin:${env.PATH}"
+}
 
     stages {
 
@@ -295,14 +298,36 @@ EOF
         }
 
         stage('Deploy') {
-            steps {
-                sh '''
-                echo "Deploying application using Docker Compose..."
-                docker compose up -d --build
-                docker ps
-                '''
-            }
+    steps {
+        withCredentials([usernamePassword(
+            credentialsId: 'ghcr-creds',
+            usernameVariable: 'GHCR_USER',
+            passwordVariable: 'GHCR_TOKEN'
+        )]) {
+            sh '''
+            echo "Deploying application..."
+
+            echo "Trying to login to GHCR..."
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+            echo "Trying to pull GHCR image..."
+            if docker pull ${DEPLOY_IMAGE}; then
+                echo "GHCR image pulled successfully."
+                export APP_IMAGE=${DEPLOY_IMAGE}
+            else
+                echo "WARNING: GHCR pull failed. Falling back to local image."
+                export APP_IMAGE=${LOCAL_IMAGE}
+            fi
+
+            echo "Using image: $APP_IMAGE"
+
+            docker compose up -d
+
+            docker ps
+            '''
         }
+    }
+}
 
                 
 
