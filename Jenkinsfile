@@ -229,7 +229,7 @@ stage('OPA Policy Gate') {
                     echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
                     echo "Detecting release version..."
-                    VERSION=$(git describe --tags --always)
+                    VERSION=$(git describe --tags --abbrev=0)
 
                     echo "Release version detected: $VERSION"
 
