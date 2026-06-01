@@ -10,7 +10,7 @@ pipeline {
     environment {
     IMAGE_NAME = 'elhalawany-devops-app:latest'
     LOCAL_IMAGE = 'elhalawany-devops-app:latest'
-    GHCR_IMAGE = 'ghcr.io/jcsa2030/elhalawany-devops-lab'
+    GHCR_IMAGE = 'ghcr.io/jcsa2030/elhalawany-devops-lab:v1.0.0-devsecops-lab'
     DEPLOY_IMAGE = 'ghcr.io/jcsa2030/elhalawany-devops-lab:security'
     SONARQUBE_SERVER = 'SonarQube'
     PATH = "/usr/local/bin:/usr/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin:${env.PATH}"
@@ -215,7 +215,7 @@ stage('OPA Policy Gate') {
         }
 
 
-        stage('Push Image to GHCR') {
+                stage('Push Image to GHCR') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'ghcr-creds',
@@ -223,18 +223,31 @@ stage('OPA Policy Gate') {
                     passwordVariable: 'GHCR_TOKEN'
                 )]) {
                     sh '''
+                    set -e
+
                     echo "Logging in to GitHub Container Registry..."
                     echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+                    echo "Detecting release version..."
+                    VERSION=$(git describe --tags --always)
+
+                    echo "Release version detected: $VERSION"
 
                     echo "Tagging image for GHCR..."
                     docker tag elhalawany-devops-app:latest ghcr.io/jcsa2030/elhalawany-devops-lab:security
                     docker tag elhalawany-devops-app:latest ghcr.io/jcsa2030/elhalawany-devops-lab:${BUILD_NUMBER}
+                    docker tag elhalawany-devops-app:latest ghcr.io/jcsa2030/elhalawany-devops-lab:$VERSION
 
                     echo "Pushing image to GHCR..."
                     docker push ghcr.io/jcsa2030/elhalawany-devops-lab:security
                     docker push ghcr.io/jcsa2030/elhalawany-devops-lab:${BUILD_NUMBER}
+                    docker push ghcr.io/jcsa2030/elhalawany-devops-lab:$VERSION
 
                     echo "GHCR push completed successfully."
+                    echo "Published tags:"
+                    echo "- security"
+                    echo "- ${BUILD_NUMBER}"
+                    echo "- $VERSION"
                     '''
                 }
             }
