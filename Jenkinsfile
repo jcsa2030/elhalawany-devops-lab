@@ -297,38 +297,46 @@ EOF
             }
         }
 
-        stage('Deploy') {
-    steps {
-        withCredentials([usernamePassword(
-            credentialsId: 'ghcr-creds',
-            usernameVariable: 'GHCR_USER',
-            passwordVariable: 'GHCR_TOKEN'
-        )]) {
-            sh '''
-            echo "Deploying application..."
+                stage('Deploy') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'ghcr-creds',
+                    usernameVariable: 'GHCR_USER',
+                    passwordVariable: 'GHCR_TOKEN'
+                )]) {
+                    sh '''
+                    set -e
 
-            echo "Trying to login to GHCR..."
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+                    echo "Deploying application with GHCR primary and local fallback..."
 
-            echo "Trying to pull GHCR image..."
-            if docker pull ${DEPLOY_IMAGE}; then
-                echo "GHCR image pulled successfully."
-                export APP_IMAGE=${DEPLOY_IMAGE}
-            else
-                echo "WARNING: GHCR pull failed. Falling back to local image."
-                export APP_IMAGE=${LOCAL_IMAGE}
-            fi
+                    echo "Logging in to GHCR..."
+                    echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
-            echo "Using image: $APP_IMAGE"
+                    echo "Trying to pull GHCR image: ${DEPLOY_IMAGE}"
+                    if docker pull ${DEPLOY_IMAGE}; then
+                        echo "GHCR image pulled successfully."
+                        APP_IMAGE=${DEPLOY_IMAGE}
+                    else
+                        echo "WARNING: GHCR pull failed. Falling back to local image: ${LOCAL_IMAGE}"
+                        APP_IMAGE=${LOCAL_IMAGE}
+                    fi
 
-            docker compose up -d
+                    export APP_IMAGE
 
-            docker ps
-            '''
+                    echo "Using deployment image: $APP_IMAGE"
+
+                    echo "Stopping old application stack..."
+                    docker compose down --remove-orphans || true
+
+                    echo "Starting application stack..."
+                    docker compose up -d
+
+                    echo "Current running containers:"
+                    docker ps
+                    '''
+                }
+            }
         }
-    }
-}
-
                 
 
         stage('Health Check') {
