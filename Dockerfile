@@ -1,5 +1,8 @@
 FROM node:22-alpine
 
+LABEL org.opencontainers.image.source="https://github.com/jcsa2030/elhalawany-devops-lab"
+
+
 # Create application directory
 WORKDIR /app
 
