@@ -131,25 +131,31 @@ stage('OPA Policy Gate') {
     }
 }
 
-        stage('SonarQube SAST - Fixed Non Blocking') {
-          steps {
-              catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-              timeout(time: 5, unit: 'MINUTES') {
-                withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    sh '''
-                    sonar-scanner \
-                      -Dsonar.projectKey=elhalawany-devops-lab \
-                      -Dsonar.projectName="Elhalawany DevOps Lab" \
-                      -Dsonar.sources=. \
-                      -Dsonar.sourceEncoding=UTF-8 \
-                      -Dsonar.nodejs.executable=/usr/local/opt/node@20/bin/node \
-                      -Dsonar.exclusions=index.js,node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,scripts/**,*.csv,*.json
-                    '''
+                stage('SonarQube SAST') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                        sh '''
+                        sonar-scanner \
+                          -Dsonar.projectKey=elhalawany-devops-lab \
+                          -Dsonar.projectName="Elhalawany DevOps Lab" \
+                          -Dsonar.sources=. \
+                          -Dsonar.sourceEncoding=UTF-8 \
+                          -Dsonar.nodejs.executable=/usr/local/opt/node@20/bin/node \
+                          -Dsonar.exclusions=index.js,node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,scripts/**,security-reports/**,zap-reports/**,*.csv,*.json
+                        '''
+                    }
                 }
             }
         }
-    }
-}
+
+        stage('SonarQube Quality Gate') {
+            steps {
+                timeout(time: 3, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
                         stage('Trivy Filesystem Scan') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
@@ -200,6 +206,32 @@ stage('OPA Policy Gate') {
                       --format json \
                       --output security-reports/trivy/trivy-image-report.json \
                       ${IMAGE_NAME}
+                    '''
+                }
+            }
+        }
+
+
+        stage('Push Image to GHCR') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'ghcr-creds',
+                    usernameVariable: 'GHCR_USER',
+                    passwordVariable: 'GHCR_TOKEN'
+                )]) {
+                    sh '''
+                    echo "Logging in to GitHub Container Registry..."
+                    echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+                    echo "Tagging image for GHCR..."
+                    docker tag elhalawany-devops-app:latest ghcr.io/jcsa2030/elhalawany-devops-lab:security
+                    docker tag elhalawany-devops-app:latest ghcr.io/jcsa2030/elhalawany-devops-lab:${BUILD_NUMBER}
+
+                    echo "Pushing image to GHCR..."
+                    docker push ghcr.io/jcsa2030/elhalawany-devops-lab:security
+                    docker push ghcr.io/jcsa2030/elhalawany-devops-lab:${BUILD_NUMBER}
+
+                    echo "GHCR push completed successfully."
                     '''
                 }
             }
@@ -272,25 +304,7 @@ EOF
             }
         }
 
-        stage('SonarQube SAST - Fixed Non Blocking!!') {
-    steps {
-        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-            timeout(time: 5, unit: 'MINUTES') {
-                withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    sh '''
-                    sonar-scanner \
-                      -Dsonar.projectKey=elhalawany-devops-lab \
-                      -Dsonar.projectName="Elhalawany DevOps Lab" \
-                      -Dsonar.sources=. \
-                      -Dsonar.sourceEncoding=UTF-8 \
-                      -Dsonar.nodejs.executable=/usr/local/opt/node@20/bin/node \
-                      -Dsonar.exclusions=index.js,node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,scripts/**,security-reports/**,zap-reports/**,*.csv,*.json
-                    '''
-                }
-            }
-        }
-    }
-}
+                
 
         stage('Health Check') {
             steps {
