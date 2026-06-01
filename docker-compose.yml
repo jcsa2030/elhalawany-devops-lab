@@ -1,6 +1,6 @@
 services:
   app:
-    build: ${APP_IMAGE:-elhalawany-devops-app:latest}
+    image: ${APP_IMAGE:-elhalawany-devops-app:latest}
     container_name: elhalawany-app
     restart: unless-stopped
     env_file:
