@@ -211,6 +211,32 @@ stage('OPA Policy Gate') {
             }
         }
 
+
+        stage('Push Image to GHCR') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'ghcr-creds',
+                    usernameVariable: 'GHCR_USER',
+                    passwordVariable: 'GHCR_TOKEN'
+                )]) {
+                    sh '''
+                    echo "Logging in to GitHub Container Registry..."
+                    echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+                    echo "Tagging image for GHCR..."
+                    docker tag elhalawany-devops-app:latest ghcr.io/jcsa2030/elhalawany-devops-lab:security
+                    docker tag elhalawany-devops-app:latest ghcr.io/jcsa2030/elhalawany-devops-lab:${BUILD_NUMBER}
+
+                    echo "Pushing image to GHCR..."
+                    docker push ghcr.io/jcsa2030/elhalawany-devops-lab:security
+                    docker push ghcr.io/jcsa2030/elhalawany-devops-lab:${BUILD_NUMBER}
+
+                    echo "GHCR push completed successfully."
+                    '''
+                }
+            }
+        }
+
         stage('Production Approval') {
             steps {
                 timeout(time: 1, unit: 'HOURS') {
