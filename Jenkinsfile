@@ -8,10 +8,13 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME = 'elhalawany-devops-app:latest'
-        SONARQUBE_SERVER = 'SonarQube'
-        PATH = "/usr/local/bin:/usr/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin:${env.PATH}"
-    }
+    IMAGE_NAME = 'elhalawany-devops-app:latest'
+    LOCAL_IMAGE = 'elhalawany-devops-app:latest'
+    GHCR_IMAGE = 'ghcr.io/jcsa2030/elhalawany-devops-lab:v1.0.0-devsecops-lab'
+    DEPLOY_IMAGE = 'ghcr.io/jcsa2030/elhalawany-devops-lab:security'
+    SONARQUBE_SERVER = 'SonarQube'
+    PATH = "/usr/local/bin:/usr/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin:${env.PATH}"
+}
 
     stages {
 
@@ -76,39 +79,44 @@ stage('Generate SBOM with Syft') {
     }
 }
 
-        stage('Upload SBOM to Dependency-Track') {
+                stage('Upload SBOM to Dependency-Track') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     withCredentials([string(credentialsId: 'vault-jenkins-token', variable: 'VAULT_TOKEN')]) {
                         sh '''
+                        set +x
+
                         echo "Reading Dependency-Track API key from Vault..."
 
                         DTRACK_API_KEY=$(curl -s \
-                          -H "X-Vault-Token: ${VAULT_TOKEN}" \
+                          -H "X-Vault-Token:$VAULT_TOKEN" \
                           http://127.0.0.1:8200/v1/secret/data/devsecops/dependency-track \
                           | jq -r '.data.data.API_KEY')
 
                         if [ -z "$DTRACK_API_KEY" ] || [ "$DTRACK_API_KEY" = "null" ]; then
-                            echo "ERROR: Failed to read Dependency-Track API key from Vault."
+                            echo "ERROR: Dependency-Track API key not found in Vault"
                             exit 1
                         fi
 
                         echo "Uploading SBOM to Dependency-Track..."
 
-                        curl -X POST http://localhost:8085/api/v1/bom \
-                          -H "X-Api-Key: ${DTRACK_API_KEY}" \
+                        curl -s -X POST \
+                          http://localhost:8085/api/v1/bom \
+                          -H "X-Api-Key: $DTRACK_API_KEY" \
                           -F "autoCreate=true" \
                           -F "projectName=elhalawany-devops-lab" \
                           -F "projectVersion=security" \
-                          -F "bom=@security-reports/sbom/sbom-cyclonedx.json"
+                          -F "bom=@security-reports/sbom/sbom-cyclonedx.json" >/dev/null
 
-                        echo "SBOM upload submitted to Dependency-Track using Vault secret."
+                        unset DTRACK_API_KEY
+
+                        echo "SBOM upload submitted successfully."
                         '''
                     }
                 }
             }
         }
-
+        
 stage('OPA Policy Gate') {
     steps {
         sh '''
@@ -212,7 +220,10 @@ stage('OPA Policy Gate') {
         }
 
 
-        stage('Push Image to GHCR') {
+
+
+
+                stage('Push Image to GHCR') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'ghcr-creds',
@@ -220,24 +231,104 @@ stage('OPA Policy Gate') {
                     passwordVariable: 'GHCR_TOKEN'
                 )]) {
                     sh '''
+                    set -e
+
                     echo "Logging in to GitHub Container Registry..."
                     echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+                    echo "Detecting release version..."
+                    VERSION=$(git describe --tags --abbrev=0)
+
+                    echo "Release version detected: $VERSION"
 
                     echo "Tagging image for GHCR..."
                     docker tag elhalawany-devops-app:latest ghcr.io/jcsa2030/elhalawany-devops-lab:security
                     docker tag elhalawany-devops-app:latest ghcr.io/jcsa2030/elhalawany-devops-lab:${BUILD_NUMBER}
+                    docker tag elhalawany-devops-app:latest ghcr.io/jcsa2030/elhalawany-devops-lab:$VERSION
 
                     echo "Pushing image to GHCR..."
                     docker push ghcr.io/jcsa2030/elhalawany-devops-lab:security
                     docker push ghcr.io/jcsa2030/elhalawany-devops-lab:${BUILD_NUMBER}
+                    docker push ghcr.io/jcsa2030/elhalawany-devops-lab:$VERSION
 
                     echo "GHCR push completed successfully."
+                    echo "Published tags:"
+                    echo "- security"
+                    echo "- ${BUILD_NUMBER}"
+                    echo "- $VERSION"
                     '''
                 }
             }
         }
 
-        stage('Production Approval') {
+
+        stage('Deploy UAT') {
+    steps {
+        sh '''
+        echo "Deploying release to UAT..."
+
+        export APP_IMAGE=${DEPLOY_IMAGE}
+
+        docker compose -f docker-compose.uat.yml down --remove-orphans || true
+
+        docker rm -f elhalawany-uat-redis || true
+        docker rm -f elhalawany-uat-postgres || true
+        docker rm -f elhalawany-uat-app || true
+        docker rm -f elhalawany-uat-nginx || true
+
+        docker compose -f docker-compose.uat.yml up -d
+
+        echo "UAT deployment completed."
+        '''
+    }
+}
+
+stage('UAT Health Check') {
+    steps {
+        sh '''
+        echo "Checking UAT environment..."
+
+        curl -f http://localhost:8082/health
+
+        curl -f http://localhost:8082/api/customers
+
+        echo "UAT validation passed."
+        '''
+    }
+}
+
+
+        stage('OWASP ZAP DAST') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    sh '''
+                    set -e
+
+                    echo "Running OWASP ZAP Baseline Scan against UAT..."
+
+                    mkdir -p zap-reports
+
+                    docker run --rm \
+                      --network host \
+                      -v "$(pwd)/zap-reports:/zap/wrk:rw" \
+                      ghcr.io/zaproxy/zaproxy:stable \
+                      zap-baseline.py \
+                      -t http://localhost:8082 \
+                      -r zap-uat-report.html \
+                      -J zap-uat-report.json \
+                      -w zap-uat-report.md \
+                      || true
+
+                    echo "OWASP ZAP scan completed."
+                    echo "Reports generated under zap-reports/"
+                    ls -la zap-reports
+                    '''
+                }
+            }
+        }
+
+
+        stage('Approve Production Deployment') {
             steps {
                 timeout(time: 1, unit: 'HOURS') {
                     input(
@@ -249,109 +340,77 @@ stage('OPA Policy Gate') {
             }
         }
 
-        stage('Create Environment File') {
-            steps {
-                sh '''
-                cat > .env.dev <<EOF
-APP_NAME=Elhalawany Dev Environment
-APP_ENV=dev
-NODE_ENV=dev
-PORT=3000
-APP_COLOR=#38bdf8
-APP_MESSAGE=Development Environment - Jenkins CI/CD Deployment
 
-DB_HOST=postgres
-DB_PORT=5432
-DB_NAME=devopsdb
-DB_USER=devopsuser
-DB_PASSWORD=devopspassword
 
-REDIS_HOST=redis
-REDIS_PORT=6379
 
-LOG_LEVEL=debug
-ENABLE_SECURITY_HEADERS=true
-ENABLE_CORS=true
-EOF
 
-                echo "Environment file created successfully:"
-                ls -la .env.dev
-                '''
-            }
-        }
+                stage('Deploy Production') {
+    steps {
+        withCredentials([usernamePassword(
+            credentialsId: 'ghcr-creds',
+            usernameVariable: 'GHCR_USER',
+            passwordVariable: 'GHCR_TOKEN'
+        )]) {
+            sh '''
+            set -e
 
-        stage('Cleanup Old Containers') {
-            steps {
-                sh '''
-                echo "Cleaning old containers and compose stack..."
-                docker compose down --remove-orphans || true
+            echo "Deploying release to Production..."
 
-                docker rm -f elhalawany-redis || true
-                docker rm -f elhalawany-postgres || true
-                docker rm -f elhalawany-app || true
-                docker rm -f elhalawany-nginx || true
-                '''
-            }
-        }
+            echo "Logging in to GHCR..."
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
-        stage('Deploy') {
-            steps {
-                sh '''
-                echo "Deploying application using Docker Compose..."
-                docker compose up -d --build
-                docker ps
-                '''
-            }
-        }
+            echo "Pulling production image: ${DEPLOY_IMAGE}"
+            docker pull ${DEPLOY_IMAGE}
 
-                
+            export APP_IMAGE=${DEPLOY_IMAGE}
 
-        stage('Health Check') {
-            steps {
-                sh '''
-                echo "Waiting for services to start..."
-                sleep 25
+            docker compose -f docker-compose.prod.yml down --remove-orphans || true
+            docker compose -f docker-compose.prod.yml up -d
 
-                echo "Checking main application..."
-                curl -f http://localhost:8080/health
-
-                echo "Checking PostgreSQL..."
-                curl -f http://localhost:8080/api/db-health
-
-                echo "Checking Redis..."
-                curl -f http://localhost:8080/api/redis-health
-
-                echo "Checking NIST API..."
-                curl -f http://localhost:8080/api/nist-summary
-
-                echo "Checking OWASP API..."
-                curl -f http://localhost:8080/api/owasp-summary
-                '''
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'DevSecOps Pipeline completed successfully.'
-        }
-
-        failure {
-            echo 'DevSecOps Pipeline failed. Review Jenkins logs.'
-        }
-
-        always {
-            archiveArtifacts artifacts: 'zap-reports/**', allowEmptyArchive: true
-            archiveArtifacts artifacts: 'security-reports/gitleaks/**', allowEmptyArchive: true
-            archiveArtifacts artifacts: 'security-reports/sbom/**', allowEmptyArchive: true
-            archiveArtifacts artifacts: 'security-reports/trivy/**', allowEmptyArchive: true
-            archiveArtifacts artifacts: 'policies/opa/**', allowEmptyArchive: true
-
-            echo 'OWASP ZAP reports archived.'
-            echo 'GitLeaks secret scanning reports archived.'
-            echo 'SBOM reports archived.'
-            echo 'Trivy reports archived successfully.'
-            echo 'Pipeline finished successfully.'
+            echo "Production deployment completed."
+            docker ps
+            '''
         }
     }
 }
+                
+        stage('Production Health Check') {
+    steps {
+        sh '''
+        set -e
+
+        echo "Waiting for Production services to start..."
+        sleep 25
+
+        echo "Checking Production main application..."
+        curl -f http://localhost:8080/health
+
+        echo "Checking Production PostgreSQL..."
+        curl -f http://localhost:8080/api/db-health
+
+        echo "Checking Production Redis..."
+        curl -f http://localhost:8080/api/redis-health
+
+        echo "Checking Production Customers API..."
+        curl -f http://localhost:8080/api/customers
+
+        echo "Production health check passed successfully."
+        '''
+    }
+    post {
+        failure {
+            sh '''
+            echo "Production health check failed. Starting automated rollback..."
+
+            chmod +x rollback-devsecops.sh
+
+            ./rollback-devsecops.sh v1.0.1-devsecops-lab
+
+            echo "Automated production rollback completed."
+            '''
+        }
+    }
+}
+    }
+}
+
