@@ -352,7 +352,7 @@ EOF
         }
                 
 
-                stage('Health Check') {
+                        stage('Health Check') {
             steps {
                 sh '''
                 set -e
@@ -389,28 +389,3 @@ EOF
                 }
             }
         }
-
-    post {
-        success {
-            echo 'DevSecOps Pipeline completed successfully.'
-        }
-
-        failure {
-            echo 'DevSecOps Pipeline failed. Review Jenkins logs.'
-        }
-
-        always {
-            archiveArtifacts artifacts: 'zap-reports/**', allowEmptyArchive: true
-            archiveArtifacts artifacts: 'security-reports/gitleaks/**', allowEmptyArchive: true
-            archiveArtifacts artifacts: 'security-reports/sbom/**', allowEmptyArchive: true
-            archiveArtifacts artifacts: 'security-reports/trivy/**', allowEmptyArchive: true
-            archiveArtifacts artifacts: 'policies/opa/**', allowEmptyArchive: true
-
-            echo 'OWASP ZAP reports archived.'
-            echo 'GitLeaks secret scanning reports archived.'
-            echo 'SBOM reports archived.'
-            echo 'Trivy reports archived successfully.'
-            echo 'Pipeline finished successfully.'
-        }
-    }
-}
