@@ -524,29 +524,50 @@ stage('Generate Security KPI KRI Report') {
 
         REPORT="compliance/reports/security-kpi-kri-report.txt"
 
+        RELEASE_VERSION=$(git describe --tags --always)
+        BUILD_ID="${BUILD_NUMBER}"
+
         GITLEAKS_STATUS="PASS"
         SONAR_STATUS="PASS"
         OPA_STATUS="PASS"
         UAT_STATUS="PASS"
         PROD_STATUS="PASS"
+
         ZAP_FAIL_NEW="0"
         ZAP_WARN_NEW="0"
 
         if [ -f zap-reports/zap-uat-report.md ]; then
-            ZAP_FAIL_NEW=$(grep -o "FAIL-NEW: [0-9]*" zap-reports/zap-uat-report.md | awk '{print $2}' | head -1 || echo "0")
-            ZAP_WARN_NEW=$(grep -o "WARN-NEW: [0-9]*" zap-reports/zap-uat-report.md | awk '{print $2}' | head -1 || echo "0")
+            ZAP_FAIL_NEW=$(grep -Eo "FAIL-NEW:[[:space:]]*[0-9]+" zap-reports/zap-uat-report.md | awk '{print $2}' | head -1 || true)
+            ZAP_WARN_NEW=$(grep -Eo "WARN-NEW:[[:space:]]*[0-9]+" zap-reports/zap-uat-report.md | awk '{print $2}' | head -1 || true)
         fi
 
-        cat > $REPORT <<EOF
+        ZAP_FAIL_NEW=${ZAP_FAIL_NEW:-0}
+        ZAP_WARN_NEW=${ZAP_WARN_NEW:-0}
+
+        if [ "$ZAP_FAIL_NEW" -gt 0 ]; then
+            DAST_RISK="HIGH"
+            SECURITY_SCORE="75%"
+            RECOMMENDATION="Do not approve production deployment until DAST findings are resolved."
+        elif [ "$ZAP_WARN_NEW" -gt 0 ]; then
+            DAST_RISK="MEDIUM"
+            SECURITY_SCORE="90%"
+            RECOMMENDATION="Production can continue with accepted warnings and remediation plan."
+        else
+            DAST_RISK="LOW"
+            SECURITY_SCORE="100%"
+            RECOMMENDATION="Release is approved from security governance perspective."
+        fi
+
+        cat > "$REPORT" <<EOF
 ========================================
 Security KPI / KRI Report
 ========================================
 
 Release:
-$(git describe --tags --always)
+$RELEASE_VERSION
 
 Build Number:
-${BUILD_NUMBER}
+$BUILD_ID
 
 Pipeline Result:
 SUCCESS
@@ -590,7 +611,7 @@ LOW
 LOW
 
 4. Web Application DAST Risk:
-$(if [ "$ZAP_FAIL_NEW" != "0" ]; then echo "HIGH"; elif [ "$ZAP_WARN_NEW" != "0" ]; then echo "MEDIUM"; else echo "LOW"; fi)
+$DAST_RISK
 
 5. Release Deployment Risk:
 LOW
@@ -600,15 +621,16 @@ Executive Score
 ----------------------------------------
 
 Security Compliance Score:
-$(if [ "$ZAP_FAIL_NEW" != "0" ]; then echo "75%"; elif [ "$ZAP_WARN_NEW" != "0" ]; then echo "90%"; else echo "100%"; fi)
+$SECURITY_SCORE
 
 Recommendation:
-$(if [ "$ZAP_FAIL_NEW" != "0" ]; then echo "Do not approve production deployment until DAST findings are resolved."; elif [ "$ZAP_WARN_NEW" != "0" ]; then echo "Production can continue with accepted warnings and remediation plan."; else echo "Release is approved from security governance perspective."; fi)
+$RECOMMENDATION
 
 ========================================
 EOF
 
-        cat $REPORT
+        echo "Security KPI/KRI Report generated:"
+        cat "$REPORT"
         '''
     }
 }
