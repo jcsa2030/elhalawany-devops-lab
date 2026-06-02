@@ -432,8 +432,6 @@ stage('UAT Health Check') {
         }
     }
 }
-    }
-}
 
 stage('Collect Compliance Evidence') {
     steps {
@@ -621,5 +619,7 @@ stage('Archive Compliance Artifacts') {
             artifacts: 'compliance/**/*',
             fingerprint: true
         )
+    }
+}
     }
 }
