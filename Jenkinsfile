@@ -286,10 +286,31 @@ stage('OPA Policy Gate') {
 stage('UAT Health Check') {
     steps {
         sh '''
-        echo "Checking UAT environment..."
+        set -e
 
-        curl -f http://localhost:8082/health
+        echo "Checking UAT environment with retry..."
 
+        for i in {1..12}; do
+            echo "UAT health check attempt $i/12"
+
+            if curl -f http://localhost:8082/health; then
+                echo "UAT main health is UP"
+                break
+            fi
+
+            echo "UAT not ready yet. Waiting 5 seconds..."
+            sleep 5
+
+            if [ "$i" = "12" ]; then
+                echo "ERROR: UAT health check failed after retries"
+                docker ps
+                docker logs elhalawany-uat-app --tail 80 || true
+                docker logs elhalawany-uat-nginx --tail 80 || true
+                exit 1
+            fi
+        done
+
+        echo "Checking UAT Customers API..."
         curl -f http://localhost:8082/api/customers
 
         echo "UAT validation passed."
