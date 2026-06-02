@@ -352,9 +352,11 @@ EOF
         }
                 
 
-        stage('Health Check') {
+                stage('Health Check') {
             steps {
                 sh '''
+                set -e
+
                 echo "Waiting for services to start..."
                 sleep 25
 
@@ -367,15 +369,26 @@ EOF
                 echo "Checking Redis..."
                 curl -f http://localhost:8080/api/redis-health
 
-                echo "Checking NIST API..."
-                curl -f http://localhost:8080/api/nist-summary
+                echo "Checking Customers API..."
+                curl -f http://localhost:8080/api/customers
 
-                echo "Checking OWASP API..."
-                curl -f http://localhost:8080/api/owasp-summary
+                echo "Health check passed successfully."
                 '''
             }
+            post {
+                failure {
+                    sh '''
+                    echo "Health check failed. Starting automated rollback..."
+
+                    chmod +x rollback-devsecops.sh
+
+                    ./rollback-devsecops.sh v1.0.1-devsecops-lab
+
+                    echo "Automated rollback completed."
+                    '''
+                }
+            }
         }
-    }
 
     post {
         success {
