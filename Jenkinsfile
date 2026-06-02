@@ -220,6 +220,9 @@ stage('OPA Policy Gate') {
         }
 
 
+
+
+
                 stage('Push Image to GHCR') {
             steps {
                 withCredentials([usernamePassword(
@@ -258,7 +261,40 @@ stage('OPA Policy Gate') {
             }
         }
 
-        stage('Production Approval') {
+
+        stage('Deploy UAT') {
+            steps {
+                sh '''
+                echo "Deploying release to UAT..."
+
+                export APP_IMAGE=${DEPLOY_IMAGE}
+
+                docker compose -f docker-compose.uat.yml down --remove-orphans || true
+
+                docker compose -f docker-compose.uat.yml up -d
+
+                echo "UAT deployment completed."
+                '''
+            }
+        }
+
+
+stage('UAT Health Check') {
+    steps {
+        sh '''
+        echo "Checking UAT environment..."
+
+        curl -f http://localhost:8082/health
+
+        curl -f http://localhost:8082/api/customers
+
+        echo "UAT validation passed."
+        '''
+    }
+}
+
+
+        stage('Approve Production Deployment') {
             steps {
                 timeout(time: 1, unit: 'HOURS') {
                     input(
@@ -315,83 +351,72 @@ EOF
             }
         }
 
-                stage('Deploy') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'ghcr-creds',
-                    usernameVariable: 'GHCR_USER',
-                    passwordVariable: 'GHCR_TOKEN'
-                )]) {
-                    sh '''
-                    set -e
+                stage('Deploy Production') {
+    steps {
+        withCredentials([usernamePassword(
+            credentialsId: 'ghcr-creds',
+            usernameVariable: 'GHCR_USER',
+            passwordVariable: 'GHCR_TOKEN'
+        )]) {
+            sh '''
+            set -e
 
-                    echo "Deploying application with GHCR primary and local fallback..."
+            echo "Deploying release to Production..."
 
-                    echo "Logging in to GHCR..."
-                    echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            echo "Logging in to GHCR..."
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
-                    echo "Trying to pull GHCR image: ${DEPLOY_IMAGE}"
-                    if docker pull ${DEPLOY_IMAGE}; then
-                        echo "GHCR image pulled successfully."
-                        APP_IMAGE=${DEPLOY_IMAGE}
-                    else
-                        echo "WARNING: GHCR pull failed. Falling back to local image: ${LOCAL_IMAGE}"
-                        APP_IMAGE=${LOCAL_IMAGE}
-                    fi
+            echo "Pulling production image: ${DEPLOY_IMAGE}"
+            docker pull ${DEPLOY_IMAGE}
 
-                    export APP_IMAGE
+            export APP_IMAGE=${DEPLOY_IMAGE}
 
-                    echo "Using deployment image: $APP_IMAGE"
+            docker compose -f docker-compose.prod.yml down --remove-orphans || true
+            docker compose -f docker-compose.prod.yml up -d
 
-                    echo "Stopping old application stack..."
-                    docker compose down --remove-orphans || true
-
-                    echo "Starting application stack..."
-                    docker compose up -d
-
-                    echo "Current running containers:"
-                    docker ps
-                    '''
-                }
-            }
+            echo "Production deployment completed."
+            docker ps
+            '''
         }
+    }
+}
                 
-        stage('Health Check') {
-            steps {
-                sh '''
-                set -e
+        stage('Production Health Check') {
+    steps {
+        sh '''
+        set -e
 
-                echo "Waiting for services to start..."
-                sleep 25
+        echo "Waiting for Production services to start..."
+        sleep 25
 
-                echo "Checking main application..."
-                curl -f http://localhost:8080/health
+        echo "Checking Production main application..."
+        curl -f http://localhost:8080/health
 
-                echo "Checking PostgreSQL..."
-                curl -f http://localhost:8080/api/db-health
+        echo "Checking Production PostgreSQL..."
+        curl -f http://localhost:8080/api/db-health
 
-                echo "Checking Redis..."
-                curl -f http://localhost:8080/api/redis-health
+        echo "Checking Production Redis..."
+        curl -f http://localhost:8080/api/redis-health
 
-                echo "Checking Customers API..."
-                curl -f http://localhost:8080/api/customers
+        echo "Checking Production Customers API..."
+        curl -f http://localhost:8080/api/customers
 
-                echo "Health check passed successfully."
-                '''
-            }
-            post {
-                failure {
-                    sh '''
-                    echo "Health check failed. Starting automated rollback..."
+        echo "Production health check passed successfully."
+        '''
+    }
+    post {
+        failure {
+            sh '''
+            echo "Production health check failed. Starting automated rollback..."
 
-                    chmod +x rollback-devsecops.sh
+            chmod +x rollback-devsecops.sh
 
-                    ./rollback-devsecops.sh v1.0.1-devsecops-lab
+            ./rollback-devsecops.sh v1.0.1-devsecops-lab
 
-                    echo "Automated rollback completed."
-                    '''
-                }
-            }
+            echo "Automated production rollback completed."
+            '''
         }
+    }
+}
     }
 }
