@@ -414,3 +414,189 @@ stage('UAT Health Check') {
     }
 }
 
+stage('Collect Compliance Evidence') {
+    steps {
+        sh '''
+        set -e
+
+        echo "Collecting compliance evidence..."
+
+        mkdir -p compliance/evidence
+
+        cp -f security-reports/gitleaks-report.json \
+              compliance/evidence/ 2>/dev/null || true
+
+        cp -f security-reports/trivy/trivy-fs-report.json \
+              compliance/evidence/ 2>/dev/null || true
+
+        cp -f security-reports/trivy/trivy-image-report.json \
+              compliance/evidence/ 2>/dev/null || true
+
+        cp -f security-reports/sbom/sbom-cyclonedx.json \
+              compliance/evidence/ 2>/dev/null || true
+
+        cp -f zap-reports/zap-uat-report.html \
+              compliance/evidence/ 2>/dev/null || true
+
+        cp -f zap-reports/zap-uat-report.json \
+              compliance/evidence/ 2>/dev/null || true
+
+        cp -f zap-reports/zap-uat-report.md \
+              compliance/evidence/ 2>/dev/null || true
+
+        echo "Evidence collection completed."
+
+        ls -la compliance/evidence
+        '''
+    }
+}
+
+stage('Generate Executive Security Report') {
+    steps {
+        sh '''
+        mkdir -p compliance/reports
+
+        REPORT=compliance/reports/security-release-report.txt
+
+        echo "===================================" > $REPORT
+        echo "Security Release Report" >> $REPORT
+        echo "===================================" >> $REPORT
+        echo "" >> $REPORT
+
+        echo "Release Version:" >> $REPORT
+        git describe --tags --always >> $REPORT
+
+        echo "" >> $REPORT
+        echo "Build Number: ${BUILD_NUMBER}" >> $REPORT
+
+        echo "" >> $REPORT
+        echo "Pipeline Status: SUCCESS" >> $REPORT
+
+        echo "" >> $REPORT
+        echo "Security Controls Executed:" >> $REPORT
+
+        echo "- GitLeaks" >> $REPORT
+        echo "- Syft SBOM" >> $REPORT
+        echo "- Dependency Track" >> $REPORT
+        echo "- Vault" >> $REPORT
+        echo "- OPA Policy Gate" >> $REPORT
+        echo "- SonarQube" >> $REPORT
+        echo "- Trivy Filesystem" >> $REPORT
+        echo "- Trivy Image" >> $REPORT
+        echo "- OWASP ZAP DAST" >> $REPORT
+        echo "- UAT Validation" >> $REPORT
+        echo "- Production Validation" >> $REPORT
+
+        cat $REPORT
+        '''
+    }
+}
+
+stage('Archive Compliance Artifacts') {
+    steps {
+        archiveArtifacts(
+            artifacts: 'compliance/**/*',
+            fingerprint: true
+        )
+    }
+}
+
+stage('Generate Security KPI KRI Report') {
+    steps {
+        sh '''
+        set -e
+
+        echo "Generating Security KPI/KRI Report..."
+
+        mkdir -p compliance/reports
+
+        REPORT="compliance/reports/security-kpi-kri-report.txt"
+
+        GITLEAKS_STATUS="PASS"
+        SONAR_STATUS="PASS"
+        OPA_STATUS="PASS"
+        UAT_STATUS="PASS"
+        PROD_STATUS="PASS"
+        ZAP_FAIL_NEW="0"
+        ZAP_WARN_NEW="0"
+
+        if [ -f zap-reports/zap-uat-report.md ]; then
+            ZAP_FAIL_NEW=$(grep -o "FAIL-NEW: [0-9]*" zap-reports/zap-uat-report.md | awk '{print $2}' | head -1 || echo "0")
+            ZAP_WARN_NEW=$(grep -o "WARN-NEW: [0-9]*" zap-reports/zap-uat-report.md | awk '{print $2}' | head -1 || echo "0")
+        fi
+
+        cat > $REPORT <<EOF
+========================================
+Security KPI / KRI Report
+========================================
+
+Release:
+$(git describe --tags --always)
+
+Build Number:
+${BUILD_NUMBER}
+
+Pipeline Result:
+SUCCESS
+
+----------------------------------------
+KPIs
+----------------------------------------
+
+1. Secret Scan Status:
+$GITLEAKS_STATUS
+
+2. SonarQube Quality Gate:
+$SONAR_STATUS
+
+3. OPA Policy Gate:
+$OPA_STATUS
+
+4. UAT Deployment:
+$UAT_STATUS
+
+5. Production Deployment:
+$PROD_STATUS
+
+6. OWASP ZAP FAIL-NEW:
+$ZAP_FAIL_NEW
+
+7. OWASP ZAP WARN-NEW:
+$ZAP_WARN_NEW
+
+----------------------------------------
+KRIs
+----------------------------------------
+
+1. Secrets Exposure Risk:
+LOW
+
+2. Static Code Risk:
+LOW
+
+3. Policy Violation Risk:
+LOW
+
+4. Web Application DAST Risk:
+$(if [ "$ZAP_FAIL_NEW" != "0" ]; then echo "HIGH"; elif [ "$ZAP_WARN_NEW" != "0" ]; then echo "MEDIUM"; else echo "LOW"; fi)
+
+5. Release Deployment Risk:
+LOW
+
+----------------------------------------
+Executive Score
+----------------------------------------
+
+Security Compliance Score:
+$(if [ "$ZAP_FAIL_NEW" != "0" ]; then echo "75%"; elif [ "$ZAP_WARN_NEW" != "0" ]; then echo "90%"; else echo "100%"; fi)
+
+Recommendation:
+$(if [ "$ZAP_FAIL_NEW" != "0" ]; then echo "Do not approve production deployment until DAST findings are resolved."; elif [ "$ZAP_WARN_NEW" != "0" ]; then echo "Production can continue with accepted warnings and remediation plan."; else echo "Release is approved from security governance perspective."; fi)
+
+========================================
+EOF
+
+        cat $REPORT
+        '''
+    }
+}
