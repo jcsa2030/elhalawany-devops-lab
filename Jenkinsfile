@@ -513,14 +513,7 @@ stage('Generate Executive Security Report') {
     }
 }
 
-stage('Archive Compliance Artifacts') {
-    steps {
-        archiveArtifacts(
-            artifacts: 'compliance/**/*',
-            fingerprint: true
-        )
-    }
-}
+
 
 stage('Generate Security KPI KRI Report') {
     steps {
@@ -619,5 +612,14 @@ EOF
 
         cat $REPORT
         '''
+    }
+}
+
+stage('Archive Compliance Artifacts') {
+    steps {
+        archiveArtifacts(
+            artifacts: 'compliance/**/*',
+            fingerprint: true
+        )
     }
 }
