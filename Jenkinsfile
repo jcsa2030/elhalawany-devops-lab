@@ -351,7 +351,6 @@ EOF
             }
         }
                 
-
         stage('Health Check') {
             steps {
                 sh '''
@@ -389,3 +388,5 @@ EOF
                 }
             }
         }
+    }
+}
