@@ -374,7 +374,7 @@ EOF
                 curl -f http://localhost:8080/api/redis-health
 
                 echo "Checking Customers API..."
-                curl -f http://localhost:8080/api/customers-invalid
+                curl -f http://localhost:8080/api/customers
 
                 echo "Health check passed successfully."
                 '''
