@@ -1,0 +1,57 @@
+services:
+  app:
+    image: ${APP_IMAGE:-elhalawany-devops-app:latest}
+    container_name: elhalawany-app
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    expose:
+      - "3000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - devops-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: elhalawany-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+    networks:
+      - devops-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: elhalawany-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: devopsdb
+      POSTGRES_USER: devopsuser
+      POSTGRES_PASSWORD: devopspassword
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - devops-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: elhalawany-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - devops-network
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  devops-network:
+    driver: bridge
