@@ -298,6 +298,36 @@ stage('UAT Health Check') {
 }
 
 
+        stage('OWASP ZAP DAST') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    sh '''
+                    set -e
+
+                    echo "Running OWASP ZAP Baseline Scan against UAT..."
+
+                    mkdir -p zap-reports
+
+                    docker run --rm \
+                      --network host \
+                      -v "$(pwd)/zap-reports:/zap/wrk:rw" \
+                      ghcr.io/zaproxy/zaproxy:stable \
+                      zap-baseline.py \
+                      -t http://localhost:8082 \
+                      -r zap-uat-report.html \
+                      -J zap-uat-report.json \
+                      -w zap-uat-report.md \
+                      || true
+
+                    echo "OWASP ZAP scan completed."
+                    echo "Reports generated under zap-reports/"
+                    ls -la zap-reports
+                    '''
+                }
+            }
+        }
+
+
         stage('Approve Production Deployment') {
             steps {
                 timeout(time: 1, unit: 'HOURS') {
