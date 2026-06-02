@@ -263,21 +263,25 @@ stage('OPA Policy Gate') {
 
 
         stage('Deploy UAT') {
-            steps {
-                sh '''
-                echo "Deploying release to UAT..."
+    steps {
+        sh '''
+        echo "Deploying release to UAT..."
 
-                export APP_IMAGE=${DEPLOY_IMAGE}
+        export APP_IMAGE=${DEPLOY_IMAGE}
 
-                docker compose -f docker-compose.uat.yml down --remove-orphans || true
+        docker compose -f docker-compose.uat.yml down --remove-orphans || true
 
-                docker compose -f docker-compose.uat.yml up -d
+        docker rm -f elhalawany-uat-redis || true
+        docker rm -f elhalawany-uat-postgres || true
+        docker rm -f elhalawany-uat-app || true
+        docker rm -f elhalawany-uat-nginx || true
 
-                echo "UAT deployment completed."
-                '''
-            }
-        }
+        docker compose -f docker-compose.uat.yml up -d
 
+        echo "UAT deployment completed."
+        '''
+    }
+}
 
 stage('UAT Health Check') {
     steps {
