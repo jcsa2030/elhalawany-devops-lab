@@ -306,50 +306,9 @@ stage('UAT Health Check') {
             }
         }
 
-        stage('Create Environment File') {
-            steps {
-                sh '''
-                cat > .env.dev <<EOF
-APP_NAME=Elhalawany Dev Environment
-APP_ENV=dev
-NODE_ENV=dev
-PORT=3000
-APP_COLOR=#38bdf8
-APP_MESSAGE=Development Environment - Jenkins CI/CD Deployment
 
-DB_HOST=postgres
-DB_PORT=5432
-DB_NAME=devopsdb
-DB_USER=devopsuser
-DB_PASSWORD=devopspassword
 
-REDIS_HOST=redis
-REDIS_PORT=6379
 
-LOG_LEVEL=debug
-ENABLE_SECURITY_HEADERS=true
-ENABLE_CORS=true
-EOF
-
-                echo "Environment file created successfully:"
-                ls -la .env.dev
-                '''
-            }
-        }
-
-        stage('Cleanup Old Containers') {
-            steps {
-                sh '''
-                echo "Cleaning old containers and compose stack..."
-                docker compose down --remove-orphans || true
-
-                docker rm -f elhalawany-redis || true
-                docker rm -f elhalawany-postgres || true
-                docker rm -f elhalawany-app || true
-                docker rm -f elhalawany-nginx || true
-                '''
-            }
-        }
 
                 stage('Deploy Production') {
     steps {
@@ -420,3 +379,4 @@ EOF
 }
     }
 }
+
