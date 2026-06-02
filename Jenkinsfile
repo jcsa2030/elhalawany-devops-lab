@@ -352,7 +352,7 @@ EOF
         }
                 
 
-                        stage('Health Check') {
+        stage('Health Check') {
             steps {
                 sh '''
                 set -e
