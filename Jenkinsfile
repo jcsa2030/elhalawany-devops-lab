@@ -670,13 +670,21 @@ EOF
 
 stage('Archive Compliance Artifacts') {
     steps {
-        archiveArtifacts(
-            artifacts: '''
-compliance/**/*
-metrics/**/*
-''',
-            fingerprint: true
-        )
+        script {
+
+            archiveArtifacts(
+                artifacts: 'compliance/**/*',
+                fingerprint: true,
+                allowEmptyArchive: true
+            )
+
+            archiveArtifacts(
+                artifacts: 'metrics/**/*',
+                fingerprint: true,
+                allowEmptyArchive: true
+            )
+
+        }
     }
 }
 
