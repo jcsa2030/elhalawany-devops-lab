@@ -25,6 +25,20 @@ pipeline {
             }
         }
 
+stage('Terraform Validate') {
+    steps {
+        dir('terraform') {
+            sh '''
+                terraform version
+                terraform init -backend=false
+                terraform fmt -check
+                terraform validate
+            '''
+        }
+    }
+}
+
+
         stage('Verify Tools') {
             steps {
                 sh '''
