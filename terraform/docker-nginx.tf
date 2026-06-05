@@ -17,6 +17,13 @@ resource "docker_container" "nginx_tf_service" {
     name = docker_network.devsecops_platform_network.name
   }
 
+  volumes {
+    host_path      = "/Users/elhalawany/node-app/terraform/nginx/default.conf"
+    container_path = "/etc/nginx/conf.d/default.conf"
+    read_only      = true
+  }
+
+
   labels {
     label = "project"
     value = var.project_name
