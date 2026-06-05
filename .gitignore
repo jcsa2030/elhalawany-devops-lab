@@ -1,32 +1,16 @@
-# Dependencies
-node_modules/
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
 
-# Environment files
-.env
-.env.dev
-.env.test
-.env.production
+# Local generated design outputs
+terraform/*-design-*.txt
+terraform/devops-lab-inventory.txt
 
-# Logs
-logs
-*.log
-npm-debug.log*
-
-# macOS
-.DS_Store
-
-# Build folders
-dist/
-build/
-
-# Coverage
-coverage/
-
-# IDE
-.vscode/
-.idea/
-
-# Docker
-*.tar
-monitoring/alertmanager/alertmanager.local.yml
-security-reports/trivy/
+# Backups and local monitoring files
+backups/
+monitoring/textfile/
