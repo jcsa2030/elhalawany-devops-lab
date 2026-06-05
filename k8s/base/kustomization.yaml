@@ -9,7 +9,4 @@ resources:
   - nginx.yaml
   - hpa.yaml
 
-commonLabels:
-  project: node-app-devsecops-lab
-  environment: dev
-  managed-by: kustomize
+
