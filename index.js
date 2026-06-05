@@ -126,11 +126,11 @@ app.use((req, res, next) => {
 
 /* PostgreSQL */
 const pool = new Pool({
-    host: process.env.DB_HOST || 'postgres',
-    port: Number(process.env.DB_PORT || 5432),
-    database: process.env.DB_NAME || 'devopsdb',
-    user: process.env.DB_USER || 'devsecops',
-    password: process.env.DB_PASSWORD || 'devopspassword'
+user: process.env.POSTGRES_USER || 'devsecops',
+database: process.env.POSTGRES_DB || 'devsecopsdb',
+password: process.env.POSTGRES_PASSWORD || 'devsecops_password_change_me',
+host: process.env.POSTGRES_HOST || 'postgres',
+port: process.env.POSTGRES_PORT || 5432,
 });
 
 /* Redis */
