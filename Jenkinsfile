@@ -202,6 +202,17 @@ stage('OPA Policy Gate') {
             }
         }
 
+
+        stage('Kubernetes Validate') {
+    steps {
+        sh '''
+            kubectl version --client
+            kubectl kustomize k8s/base
+            kubectl apply --dry-run=client -k k8s/base
+        '''
+    }
+}
+
         stage('Docker Build') {
             steps {
                 sh '''
