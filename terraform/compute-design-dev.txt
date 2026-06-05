@@ -1,0 +1,36 @@
+Compute Design - dev
+
+Application Server:
+- Name   : node-app-server
+- Role   : Application Runtime
+- Subnet : 10.10.1.0/24
+- Port   : 8080
+
+CI/CD Server:
+- Name   : jenkins-server
+- Role   : CI/CD Automation
+- Subnet : 10.10.3.0/24
+- Port   : 8081
+
+Quality Server:
+- Name   : sonarqube-server
+- Role   : Code Quality and SAST
+- Subnet : 10.10.3.0/24
+- Port   : 9000
+
+Monitoring Server:
+- Name   : monitoring-server
+- Role   : Prometheus and Grafana
+- Subnet : 10.10.2.0/24
+- Port   : 9090
+
+Future Expansion:
+- Kubernetes Control Plane
+- Kubernetes Worker Nodes
+- ArgoCD
+- Vault
+- OPA
+- Loki
+- Tempo
+- OpenTelemetry
+- Backstage

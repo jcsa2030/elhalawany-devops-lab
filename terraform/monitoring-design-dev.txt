@@ -1,0 +1,28 @@
+Monitoring Design - dev
+
+Prometheus:
+- Name : prometheus
+- Port : 9090
+- Role : Metrics Collection
+
+Grafana:
+- Name : grafana
+- Port : 3000
+- Role : Dashboards and Visualization
+
+Node.js Application Metrics:
+- Name     : node-app-metrics
+- Endpoint : /metrics
+- Role     : Application Metrics
+
+Current Verified Metrics:
+- /metrics endpoint is working
+- security_ metrics confirmed
+- Prometheus integration path ready
+
+Future Observability:
+- Loki for logs
+- Tempo for traces
+- OpenTelemetry for distributed telemetry
+- SLO / SLA Dashboards
+- Alerting Rules

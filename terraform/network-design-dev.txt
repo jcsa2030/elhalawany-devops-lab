@@ -1,0 +1,17 @@
+Network Name: node-app-devsecops-lab-dev-network
+
+Subnets:
+- App Subnet        : 10.10.1.0/24
+- Monitoring Subnet : 10.10.2.0/24
+- Security Subnet   : 10.10.3.0/24
+
+Purpose:
+This network layer will support:
+- Node.js Application
+- Jenkins
+- SonarQube
+- Dependency-Track
+- Trivy
+- Prometheus
+- Grafana
+- Future Kubernetes Cluster
