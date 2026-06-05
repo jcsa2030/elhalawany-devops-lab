@@ -7,6 +7,7 @@ resources:
   - postgres.yaml
   - node-app.yaml
   - nginx.yaml
+  - hpa.yaml
 
 commonLabels:
   project: node-app-devsecops-lab
