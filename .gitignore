@@ -14,3 +14,16 @@ terraform/devops-lab-inventory.txt
 # Backups and local monitoring files
 backups/
 monitoring/textfile/
+
+# Node.js
+node_modules/
+
+# Environment files
+.env*
+!.env.example
+
+# Security reports
+security-reports/trivy/
+
+# Local Alertmanager config
+monitoring/alertmanager/alertmanager.local.yml
