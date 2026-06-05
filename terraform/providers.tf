@@ -11,5 +11,14 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.6"
     }
+
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~> 3.0"
+    }
   }
+}
+
+provider "docker" {
+  host = "unix:///var/run/docker.sock"
 }
