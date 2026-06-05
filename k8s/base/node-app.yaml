@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-app-config
+  namespace: devsecops-dev
+data:
+  NODE_ENV: "dev"
+  PORT: "3000"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "devsecopsdb"
+  POSTGRES_USER: "devsecops"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: node-app-secret
+  namespace: devsecops-dev
+type: Opaque
+stringData:
+  POSTGRES_PASSWORD: "devsecops_password_change_me"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-app
+  namespace: devsecops-dev
+  labels:
+    app: node-app
+    project: node-app-devsecops-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: node-app
+  template:
+    metadata:
+      labels:
+        app: node-app
+    spec:
+      containers:
+        - name: node-app
+          image: ghcr.io/jcsa2030/elhalawany-devops-lab:security
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: node-app-config
+            - secretRef:
+                name: node-app-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-app
+  namespace: devsecops-dev
+spec:
+  selector:
+    app: node-app
+  ports:
+    - port: 3000
+      targetPort: 3000
+  type: ClusterIP
