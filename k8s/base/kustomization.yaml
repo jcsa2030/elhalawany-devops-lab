@@ -8,5 +8,5 @@ resources:
   - node-app.yaml
   - nginx.yaml
   - hpa.yaml
-
+  - ingress.yaml
 
