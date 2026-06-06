@@ -1,7 +1,7 @@
 #!/bin/bash
 
 NAMESPACE="devsecops-dev"
-APP_LOCAL_PORT="18080"
+APP_LOCAL_PORT="18081"
 APP_URL="http://localhost:${APP_LOCAL_PORT}"
 REPORT_DIR="$HOME/node-app/test-reports"
 DATE=$(date +"%Y-%m-%d_%H-%M-%S")
@@ -187,28 +187,34 @@ PF_PID=$!
 
 sleep 5
 
-if curl -s "$APP_URL/health" | grep -q "UP"; then
-  pass "Application health endpoint is UP"
+if ! ps -p "$PF_PID" >/dev/null 2>&1; then
+  fail "Port-forward failed to start" "Run: cat /tmp/devsecops-port-forward.log"
 else
-  fail "Application health endpoint failed" "Check nginx and node-app logs. Run: kubectl logs -n $NAMESPACE deployment/nginx"
-fi
+  pass "Port-forward started on localhost:$APP_LOCAL_PORT"
 
-if curl -s "$APP_URL/api/db-health" | grep -qi "UP"; then
-  pass "Application can connect to PostgreSQL"
-else
-  fail "Application database health failed" "Verify POSTGRES_PASSWORD in node-app-secret matches postgres-secret."
-fi
+  if curl --max-time 5 -s "$APP_URL/health" | grep -q "UP"; then
+    pass "Application health endpoint is UP"
+  else
+    fail "Application health endpoint failed" "Check nginx and node-app logs."
+  fi
 
-if curl -s "$APP_URL/api/redis-health" | grep -qi "UP"; then
-  pass "Application can connect to Redis"
-else
-  fail "Application Redis health failed" "Verify REDIS_HOST=redis and Redis service is running."
-fi
+  if curl --max-time 5 -s "$APP_URL/api/db-health" | grep -qi "UP"; then
+    pass "Application can connect to PostgreSQL"
+  else
+    fail "Application database health failed" "Check app DB env vars and PostgreSQL logs."
+  fi
 
-if curl -s "$APP_URL/metrics" | grep -q "security_"; then
-  pass "Security metrics are exposed"
-else
-  fail "Security metrics missing" "Check /metrics endpoint in Node.js app."
+  if curl --max-time 5 -s "$APP_URL/api/redis-health" | grep -qi "UP"; then
+    pass "Application can connect to Redis"
+  else
+    fail "Application Redis health failed" "Check REDIS_HOST=redis and Redis service."
+  fi
+
+  if curl --max-time 5 -s "$APP_URL/metrics" | grep -q "security_"; then
+    pass "Security metrics are exposed"
+  else
+    fail "Security metrics missing" "Check /metrics endpoint in Node.js app."
+  fi
 fi
 
 kill "$PF_PID" >/dev/null 2>&1 || true
@@ -285,3 +291,15 @@ fi
 log ""
 log "Report saved to:"
 log "$REPORT_FILE"
+
+
+source "$HOME/node-app/ops-html-email-helper.sh"
+
+HTML_FILE="${REPORT_FILE%.txt}.html"
+
+create_html_report "DevSecOps Lab Report" "$REPORT_FILE" "$HTML_FILE"
+
+echo "HTML report:"
+echo "$HTML_FILE"
+
+send_email_if_enabled "DevSecOps Lab Report" "$HTML_FILE"

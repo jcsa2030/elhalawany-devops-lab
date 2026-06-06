@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>DevSecOps Lab Report</title>
+<style>
+body { font-family: Arial, sans-serif; background:#0f172a; color:#e5e7eb; padding:30px; }
+.container { max-width:1200px; margin:auto; background:#1e293b; padding:30px; border-radius:14px; }
+h1 { color:#38bdf8; }
+.card { display:inline-block; padding:18px; margin:8px; border-radius:10px; min-width:120px; text-align:center; font-weight:bold; }
+.pass { background:#14532d; color:#bbf7d0; }
+.fail { background:#7f1d1d; color:#fecaca; }
+.warn { background:#78350f; color:#fde68a; }
+pre { background:#020617; padding:20px; border-radius:10px; overflow:auto; white-space:pre-wrap; line-height:1.5; }
+.footer { color:#94a3b8; margin-top:25px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>DevSecOps Lab Report</h1>
+
+<div class="card pass">PASS<br>31</div>
+<div class="card fail">FAIL<br>0
+0</div>
+<div class="card warn">WARN<br>0
+0</div>
+
+<h2>Full Report</h2>
+<pre>
+========================================
+ DevSecOps Lab Full Validation Report
+ Date: 2026-06-06_17-42-35
+ Namespace: devsecops-dev
+========================================
+
+✅ PASS: kubectl command exists
+✅ PASS: docker command exists
+✅ PASS: curl command exists
+✅ PASS: git command exists
+
+1. Kubernetes Cluster Check
+---------------------------
+✅ PASS: Kubernetes cluster is reachable
+NAME                    STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                       KERNEL-VERSION             CONTAINER-RUNTIME
+desktop-control-plane   Ready    control-plane   18h   v1.36.1   172.26.0.2    &lt;none&gt;        Debian GNU/Linux 13 (trixie)   6.12.76-linuxkit (amd64)   containerd://2.3.1
+
+2. Namespace Check
+------------------
+✅ PASS: Namespace devsecops-dev exists
+
+3. Pods Check
+-------------
+NAME                        READY   STATUS    RESTARTS        AGE
+nginx-75fc8b5597-n6tl6      1/1     Running   0               3h24m
+node-app-6584f8cd84-rnflg   1/1     Running   0               3h25m
+postgres-794dd78f69-dtzhk   1/1     Running   1 (3h24m ago)   3h25m
+redis-86db9bcb4d-nrz5n      1/1     Running   0               3h25m
+✅ PASS: redis pod is Running and Ready
+✅ PASS: postgres pod is Running and Ready
+✅ PASS: node-app pod is Running and Ready
+✅ PASS: nginx pod is Running and Ready
+
+4. Services Check
+-----------------
+NAME       TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+nginx      NodePort    10.96.149.83    &lt;none&gt;        80:30080/TCP   18h
+node-app   ClusterIP   10.96.140.111   &lt;none&gt;        3000/TCP       18h
+postgres   ClusterIP   10.96.102.71    &lt;none&gt;        5432/TCP       18h
+redis      ClusterIP   10.96.126.23    &lt;none&gt;        6379/TCP       18h
+✅ PASS: Service redis exists
+✅ PASS: Service postgres exists
+✅ PASS: Service node-app exists
+✅ PASS: Service nginx exists
+
+5. PostgreSQL Check
+-------------------
+✅ PASS: PostgreSQL is accepting connections
+
+6. Redis Check
+--------------
+✅ PASS: Redis responded with PONG
+
+7. Metrics Server Check
+-----------------------
+✅ PASS: Metrics Server is working
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-75fc8b5597-n6tl6      0m           13Mi            
+node-app-6584f8cd84-rnflg   8m           54Mi            
+postgres-794dd78f69-dtzhk   1m           26Mi            
+redis-86db9bcb4d-nrz5n      5m           5Mi             
+
+8. HPA Check
+------------
+NAME           REFERENCE             TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+node-app-hpa   Deployment/node-app   cpu: 8%/70%   1         3         1          18h
+✅ PASS: HPA is active with target: cpu:
+
+9. Node.js Resources and Probes Check
+-------------------------------------
+✅ PASS: Node.js CPU requests exist
+✅ PASS: Readiness probe exists
+✅ PASS: Liveness probe exists
+
+10. Application URL Test via Port Forward
+-----------------------------------------
+✅ PASS: Port-forward started on localhost:18081
+✅ PASS: Application health endpoint is UP
+✅ PASS: Application can connect to PostgreSQL
+✅ PASS: Application can connect to Redis
+✅ PASS: Security metrics are exposed
+
+11. Kustomize Validation
+------------------------
+✅ PASS: Kustomize build succeeded
+✅ PASS: Kubernetes dry-run succeeded
+
+12. Docker Check
+----------------
+✅ PASS: Docker is running
+
+13. Terraform Check
+-------------------
+✅ PASS: Terraform validate succeeded
+
+14. Recent Logs Summary
+-----------------------
+
+--- Logs for nginx ---
+2026/06/06 11:17:38 [notice] 1#1: start worker process 37
+2026/06/06 11:17:38 [notice] 1#1: start worker process 38
+2026/06/06 11:17:38 [notice] 1#1: start worker process 39
+2026/06/06 11:17:38 [notice] 1#1: start worker process 40
+127.0.0.1 - - [06/Jun/2026:11:17:46 +0000] "GET /health HTTP/1.1" 200 161 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:11:17:46 +0000] "GET /api/db-health HTTP/1.1" 200 158 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:11:17:46 +0000] "GET /api/redis-health HTTP/1.1" 200 148 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:11:17:46 +0000] "GET /metrics HTTP/1.1" 200 10450 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:11:17:57 +0000] "GET /health HTTP/1.1" 200 161 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:11:17:57 +0000] "GET /api/db-health HTTP/1.1" 200 158 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:11:17:57 +0000] "GET /api/redis-health HTTP/1.1" 200 148 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:11:17:57 +0000] "GET /metrics HTTP/1.1" 200 10537 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:14:19:14 +0000] "GET /health HTTP/1.1" 200 164 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:14:19:14 +0000] "GET /api/db-health HTTP/1.1" 200 158 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:14:19:14 +0000] "GET /api/redis-health HTTP/1.1" 200 148 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:14:19:14 +0000] "GET /metrics HTTP/1.1" 200 10544 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:14:42:43 +0000] "GET /health HTTP/1.1" 200 164 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:14:42:43 +0000] "GET /api/db-health HTTP/1.1" 200 158 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:14:42:43 +0000] "GET /api/redis-health HTTP/1.1" 200 148 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:14:42:43 +0000] "GET /metrics HTTP/1.1" 200 10559 "-" "curl/8.7.1" "-"
+
+--- Logs for node-app ---
+[0mGET /health [32m200[0m 0.279 ms - 164[0m
+[0mGET /health [32m200[0m 0.287 ms - 164[0m
+[0mGET /health [32m200[0m 0.300 ms - 164[0m
+[0mGET /health [32m200[0m 0.211 ms - 164[0m
+[0mGET /health [32m200[0m 0.418 ms - 164[0m
+[0mGET /health [32m200[0m 0.240 ms - 164[0m
+[0mGET /health [32m200[0m 0.237 ms - 164[0m
+[0mGET /health [32m200[0m 0.312 ms - 164[0m
+[0mGET /health [32m200[0m 0.291 ms - 164[0m
+[0mGET /health [32m200[0m 0.216 ms - 164[0m
+[0mGET /health [32m200[0m 0.253 ms - 164[0m
+[0mGET /health [32m200[0m 0.237 ms - 164[0m
+[0mGET /health [32m200[0m 0.243 ms - 164[0m
+[0mGET /health [32m200[0m 0.238 ms - 164[0m
+[0mGET /health [32m200[0m 0.191 ms - 163[0m
+[0mGET /health [32m200[0m 0.207 ms - 164[0m
+[0mGET /health [32m200[0m 0.692 ms - 164[0m
+[0mGET /api/db-health [32m200[0m 17.563 ms - 158[0m
+[0mGET /api/redis-health [32m200[0m 2.683 ms - 148[0m
+[0mGET /metrics [32m200[0m 2.847 ms - -[0m
+
+--- Logs for postgres ---
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2026-06-06 11:18:26.750 UTC [1] LOG:  starting PostgreSQL 16.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+2026-06-06 11:18:26.750 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-06-06 11:18:26.750 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2026-06-06 11:18:26.753 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-06-06 11:18:26.757 UTC [34] LOG:  database system was interrupted; last known up at 2026-06-06 11:17:26 UTC
+2026-06-06 11:18:26.886 UTC [34] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-06-06 11:18:26.888 UTC [34] LOG:  redo starts at 0/1960100
+2026-06-06 11:18:26.888 UTC [34] LOG:  invalid record length at 0/1960138: expected at least 24, got 0
+2026-06-06 11:18:26.888 UTC [34] LOG:  redo done at 0/1960100 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-06-06 11:18:26.890 UTC [32] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-06-06 11:18:26.896 UTC [32] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.002 s, sync=0.001 s, total=0.007 s; sync files=2, longest=0.001 s, average=0.001 s; distance=0 kB, estimate=0 kB; lsn=0/1960138, redo lsn=0/1960138
+2026-06-06 11:18:26.900 UTC [1] LOG:  database system is ready to accept connections
+2026-06-06 14:19:07.851 UTC [82] FATAL:  database "devsecops" does not exist
+2026-06-06 14:42:37.121 UTC [113] FATAL:  database "devsecops" does not exist
+
+--- Logs for redis ---
+1:C 06 Jun 2026 11:17:25.375 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+1:C 06 Jun 2026 11:17:25.375 * Redis version=7.4.9, bits=64, commit=00000000, modified=0, pid=1, just started
+1:C 06 Jun 2026 11:17:25.375 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+1:M 06 Jun 2026 11:17:25.376 * monotonic clock: POSIX clock_gettime
+1:M 06 Jun 2026 11:17:25.377 * Running mode=standalone, port=6379.
+1:M 06 Jun 2026 11:17:25.378 * Server initialized
+1:M 06 Jun 2026 11:17:25.378 * Ready to accept connections tcp
+1:M 06 Jun 2026 11:21:18.879 * DB saved on disk
+1:M 06 Jun 2026 14:19:14.920 * 1 changes in 3600 seconds. Saving...
+1:M 06 Jun 2026 14:19:14.920 * Background saving started by pid 56
+56:C 06 Jun 2026 14:19:14.923 * DB saved on disk
+56:C 06 Jun 2026 14:19:14.923 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+1:M 06 Jun 2026 14:19:15.022 * Background saving terminated with success
+
+========================================
+ Final Summary
+========================================
+PASS: 30
+FAIL: 0
+WARN: 0
+
+✅ Overall Status: HEALTHY
+Recommendation: Lab is ready for next phase.
+
+Report saved to:
+/Users/elhalawany/node-app/test-reports/devsecops-test-report-2026-06-06_17-42-35.txt
+</pre>
+
+<div class="footer">
+Generated by DevSecOps Lab Operations Toolkit
+</div>
+</div>
+</body>
+</html>

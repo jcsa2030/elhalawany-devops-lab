@@ -75,3 +75,15 @@ echo "Rollback completed successfully"
 echo "Active image:"
 docker inspect elhalawany-app --format='{{.Config.Image}}' || true
 echo "=============================================="
+
+
+source "$HOME/node-app/ops-html-email-helper.sh"
+
+HTML_FILE="${REPORT_FILE%.txt}.html"
+
+create_html_report "DevSecOps Lab Report" "$REPORT_FILE" "$HTML_FILE"
+
+echo "HTML report:"
+echo "$HTML_FILE"
+
+send_email_if_enabled "DevSecOps Lab Report" "$HTML_FILE"

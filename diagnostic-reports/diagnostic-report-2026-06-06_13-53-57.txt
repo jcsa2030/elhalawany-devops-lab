@@ -1,0 +1,47 @@
+========================================
+ DevSecOps Lab Auto Diagnostic Report
+ Date: 2026-06-06_13-53-57
+ Namespace: devsecops-dev
+========================================
+
+1. Cluster Connectivity
+✅ OK: Kubernetes cluster is reachable
+2. Namespace
+✅ OK: Namespace exists
+3. Pods Health
+✅ OK: nginx pod is healthy
+✅ OK: node-app pod is healthy
+✅ OK: postgres pod is healthy
+✅ OK: redis pod is healthy
+4. PostgreSQL
+✅ OK: PostgreSQL is accepting connections
+5. Redis
+✅ OK: Redis responds with PONG
+6. Node.js Environment Variables
+POSTGRES_DB=devsecopsdb
+POSTGRES_HOST=postgres
+POSTGRES_USER=devsecops
+REDIS_HOST=redis
+✅ OK: Node.js DB environment variables are correct
+7. Metrics Server
+✅ OK: Metrics Server is working
+8. HPA
+✅ OK: HPA is working: cpu:
+9. Kustomize
+✅ OK: Kustomize build is valid
+10. Terraform
+✅ OK: Terraform validation passed
+11. Git Status
+❌ ISSUE: Uncommitted changes exist
+✅ FIX: Run: git status, review changes, then git add/commit/push.
+
+12. Application URL Test
+✅ OK: Application health endpoint is UP
+✅ OK: Application database health is UP
+✅ OK: Application Redis health is UP
+
+========================================
+ Diagnostic Completed
+ Report saved to:
+/Users/elhalawany/node-app/diagnostic-reports/diagnostic-report-2026-06-06_13-53-57.txt
+========================================
