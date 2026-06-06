@@ -27,3 +27,25 @@ security-reports/trivy/
 
 # Local Alertmanager config
 monitoring/alertmanager/alertmanager.local.yml
+
+# Reports
+test-reports/
+daily-health-reports/
+maintenance-reports/
+recovery-reports/
+diagnostic-reports/
+k8s-admin-reports/
+
+# Sonar
+.scannerwork/
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+
+# Logs
+*.log
+
+# Generated HTML
+*.html
