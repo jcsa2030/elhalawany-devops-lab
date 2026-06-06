@@ -1,0 +1,43 @@
+
+> node-app@1.0.0 start
+> node index.js
+
+Server running on port 3000
+Environment: dev
+Redis route enabled: /api/redis-health
+NIST controls route enabled: /api/nist-controls
+NIST summary route enabled: /api/nist-summary
+OWASP route enabled: /api/owasp-top10
+OWASP summary route enabled: /api/owasp-summary
+Redis connected successfully
+[0mGET /health [32m200[0m 3.341 ms - 160[0m
+[0mGET /health [32m200[0m 0.682 ms - 161[0m
+[0mGET /health [32m200[0m 0.516 ms - 161[0m
+[0mGET /health [32m200[0m 0.432 ms - 161[0m
+[0mGET /health [32m200[0m 0.274 ms - 161[0m
+[0mGET /health [32m200[0m 0.243 ms - 161[0m
+[0mGET /health [32m200[0m 0.342 ms - 161[0m
+[0mGET /health [32m200[0m 0.386 ms - 161[0m
+[0mGET /health [32m200[0m 0.615 ms - 161[0m
+[0mGET /health [32m200[0m 0.467 ms - 160[0m
+[0mGET /health [32m200[0m 0.441 ms - 161[0m
+[0mGET /health [32m200[0m 0.445 ms - 160[0m
+[0mGET /health [32m200[0m 0.332 ms - 161[0m
+[0mGET /health [32m200[0m 0.579 ms - 161[0m
+[0mGET /health [32m200[0m 0.216 ms - 162[0m
+[0mGET /health [32m200[0m 0.404 ms - 162[0m
+[0mGET /health [32m200[0m 0.235 ms - 162[0m
+[0mGET /health [32m200[0m 0.252 ms - 162[0m
+[0mGET /health [32m200[0m 0.222 ms - 162[0m
+[0mGET /health [32m200[0m 0.427 ms - 162[0m
+[0mGET /health [32m200[0m 0.297 ms - 162[0m
+[0mGET /health [32m200[0m 0.249 ms - 161[0m
+[0mGET /health [32m200[0m 0.433 ms - 161[0m
+[0mGET /health [32m200[0m 0.255 ms - 162[0m
+[0mGET /health [32m200[0m 0.242 ms - 162[0m
+[0mGET /health [32m200[0m 0.244 ms - 162[0m
+[0mGET /health [32m200[0m 0.214 ms - 162[0m
+[0mGET /health [32m200[0m 0.234 ms - 162[0m
+[0mGET /api/db-health [32m200[0m 24.041 ms - 158[0m
+[0mGET /api/redis-health [32m200[0m 2.463 ms - 148[0m
+[0mGET /metrics [32m200[0m 4.525 ms - -[0m

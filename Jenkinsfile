@@ -25,6 +25,20 @@ pipeline {
             }
         }
 
+stage('Terraform Validate') {
+    steps {
+        dir('terraform') {
+            sh '''
+                terraform version
+                terraform init -backend=false
+                terraform fmt -check
+                terraform validate
+            '''
+        }
+    }
+}
+
+
         stage('Verify Tools') {
             steps {
                 sh '''
@@ -151,6 +165,7 @@ stage('OPA Policy Gate') {
                           -Dsonar.sourceEncoding=UTF-8 \
                           -Dsonar.nodejs.executable=/usr/local/opt/node@20/bin/node \
                           -Dsonar.exclusions=index.js,node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,scripts/**,security-reports/**,zap-reports/**,*.csv,*.json
+                          -Dsonar.exclusions="node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,security-reports/**,zap-reports/**,test-reports/**,recovery-reports/**,maintenance-reports/**,diagnostic-reports/**,daily-health-reports/**,k8s-admin-reports/**,backups/**,terraform/.terraform/**,terraform/*.tfstate,terraform/*.tfstate.backup,*.log,*.tar.gz,.env*,*.json,*.html,*.sh,ops-html-email-helper.sh"
                         '''
                     }
                 }
@@ -187,6 +202,17 @@ stage('OPA Policy Gate') {
                 }
             }
         }
+
+
+        stage('Kubernetes Validate') {
+    steps {
+        sh '''
+            kubectl version --client
+            kubectl kustomize k8s/base
+            kubectl apply --dry-run=client -k k8s/base
+        '''
+    }
+}
 
         stage('Docker Build') {
             steps {

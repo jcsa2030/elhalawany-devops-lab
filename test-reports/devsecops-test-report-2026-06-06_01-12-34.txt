@@ -1,0 +1,187 @@
+========================================
+ DevSecOps Lab Full Validation Report
+ Date: 2026-06-06_01-12-34
+ Namespace: devsecops-dev
+========================================
+
+✅ PASS: kubectl command exists
+✅ PASS: docker command exists
+✅ PASS: curl command exists
+✅ PASS: git command exists
+
+1. Kubernetes Cluster Check
+---------------------------
+✅ PASS: Kubernetes cluster is reachable
+NAME                    STATUS   ROLES           AGE    VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                       KERNEL-VERSION             CONTAINER-RUNTIME
+desktop-control-plane   Ready    control-plane   129m   v1.36.1   172.26.0.2    <none>        Debian GNU/Linux 13 (trixie)   6.12.76-linuxkit (amd64)   containerd://2.3.1
+
+2. Namespace Check
+------------------
+✅ PASS: Namespace devsecops-dev exists
+
+3. Pods Check
+-------------
+NAME                       READY   STATUS    RESTARTS   AGE
+nginx-85cb54f749-dnjb7     1/1     Running   0          77m
+node-app-846dd465-n7qs2    1/1     Running   0          19m
+postgres-c8876b9b8-g2nrv   1/1     Running   0          77m
+redis-88f6ffbc8-wl9lx      1/1     Running   0          77m
+✅ PASS: redis pod is Running and Ready
+✅ PASS: postgres pod is Running and Ready
+✅ PASS: node-app pod is Running and Ready
+✅ PASS: nginx pod is Running and Ready
+
+4. Services Check
+-----------------
+NAME       TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+nginx      NodePort    10.96.149.83    <none>        80:30080/TCP   118m
+node-app   ClusterIP   10.96.140.111   <none>        3000/TCP       120m
+postgres   ClusterIP   10.96.102.71    <none>        5432/TCP       122m
+redis      ClusterIP   10.96.126.23    <none>        6379/TCP       123m
+✅ PASS: Service redis exists
+✅ PASS: Service postgres exists
+✅ PASS: Service node-app exists
+✅ PASS: Service nginx exists
+
+5. PostgreSQL Check
+-------------------
+✅ PASS: PostgreSQL is accepting connections
+
+6. Redis Check
+--------------
+✅ PASS: Redis responded with PONG
+
+7. Metrics Server Check
+-----------------------
+✅ PASS: Metrics Server is working
+NAME                       CPU(cores)   MEMORY(bytes)   
+nginx-85cb54f749-dnjb7     0m           13Mi            
+node-app-846dd465-n7qs2    9m           71Mi            
+postgres-c8876b9b8-g2nrv   1m           29Mi            
+redis-88f6ffbc8-wl9lx      6m           4Mi             
+
+8. HPA Check
+------------
+NAME           REFERENCE             TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+node-app-hpa   Deployment/node-app   cpu: 7%/70%   1         3         1          114m
+✅ PASS: HPA is active with target: cpu:
+
+9. Node.js Resources and Probes Check
+-------------------------------------
+✅ PASS: Node.js CPU requests exist
+✅ PASS: Readiness probe exists
+✅ PASS: Liveness probe exists
+
+10. Application URL Test via Port Forward
+-----------------------------------------
+✅ PASS: Port-forward started on localhost:18081
+✅ PASS: Application health endpoint is UP
+❌ FAIL: Application database health failed
+   Recommendation: Check app DB env vars and PostgreSQL logs.
+✅ PASS: Application can connect to Redis
+✅ PASS: Security metrics are exposed
+
+11. Kustomize Validation
+------------------------
+✅ PASS: Kustomize build succeeded
+✅ PASS: Kubernetes dry-run succeeded
+
+12. Docker Check
+----------------
+✅ PASS: Docker is running
+
+13. Terraform Check
+-------------------
+✅ PASS: Terraform validate succeeded
+
+14. Recent Logs Summary
+-----------------------
+
+--- Logs for nginx ---
+10.244.0.25 - - [05/Jun/2026:21:08:57 +0000] "GET /api/db-health HTTP/1.1" 500 184 "-" "curl/8.7.1" "172.26.0.5"
+10.244.0.25 - - [05/Jun/2026:21:09:02 +0000] "GET /api/redis-health HTTP/1.1" 200 148 "-" "curl/8.7.1" "172.26.0.5"
+10.244.0.25 - - [05/Jun/2026:21:09:07 +0000] "GET /metrics HTTP/1.1" 200 10583 "-" "curl/8.7.1" "172.26.0.5"
+127.0.0.1 - - [05/Jun/2026:21:37:03 +0000] "GET /health HTTP/1.1" 200 163 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [05/Jun/2026:21:37:03 +0000] "GET /api/db-health HTTP/1.1" 500 184 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [05/Jun/2026:21:37:03 +0000] "GET /api/redis-health HTTP/1.1" 200 148 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [05/Jun/2026:21:37:03 +0000] "GET /metrics HTTP/1.1" 200 10595 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [05/Jun/2026:21:43:30 +0000] "GET /api/db-health HTTP/1.1" 500 184 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [05/Jun/2026:21:43:30 +0000] "GET /favicon.ico HTTP/1.1" 404 268 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [05/Jun/2026:21:43:36 +0000] "GET /api/db-health HTTP/1.1" 500 184 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [05/Jun/2026:21:43:38 +0000] "GET /api/db-health HTTP/1.1" 500 184 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [05/Jun/2026:21:43:38 +0000] "GET /api/db-health HTTP/1.1" 500 184 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [05/Jun/2026:21:43:39 +0000] "GET /api/db-health HTTP/1.1" 500 184 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [05/Jun/2026:21:43:39 +0000] "GET /api/db-health HTTP/1.1" 500 184 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [05/Jun/2026:21:43:40 +0000] "GET /api/db-health HTTP/1.1" 500 184 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [05/Jun/2026:21:43:41 +0000] "GET /api/db-health HTTP/1.1" 500 184 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [05/Jun/2026:22:12:41 +0000] "GET /health HTTP/1.1" 200 163 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [05/Jun/2026:22:12:41 +0000] "GET /api/db-health HTTP/1.1" 500 184 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [05/Jun/2026:22:12:41 +0000] "GET /api/redis-health HTTP/1.1" 200 148 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [05/Jun/2026:22:12:42 +0000] "GET /metrics HTTP/1.1" 200 10419 "-" "curl/8.7.1" "-"
+
+--- Logs for node-app ---
+[0mGET /health [32m200[0m 0.299 ms - 163[0m
+[0mGET /health [32m200[0m 0.220 ms - 163[0m
+[0mGET /health [32m200[0m 0.250 ms - 163[0m
+[0mGET /health [32m200[0m 0.237 ms - 161[0m
+[0mGET /health [32m200[0m 0.420 ms - 163[0m
+[0mGET /health [32m200[0m 0.238 ms - 163[0m
+[0mGET /health [32m200[0m 0.394 ms - 163[0m
+[0mGET /health [32m200[0m 0.240 ms - 163[0m
+[0mGET /health [32m200[0m 0.276 ms - 163[0m
+[0mGET /health [32m200[0m 0.244 ms - 163[0m
+[0mGET /health [32m200[0m 0.243 ms - 163[0m
+[0mGET /health [32m200[0m 0.720 ms - 163[0m
+[0mGET /health [32m200[0m 0.266 ms - 163[0m
+[0mGET /health [32m200[0m 0.303 ms - 162[0m
+[0mGET /health [32m200[0m 0.371 ms - 162[0m
+[0mGET /health [32m200[0m 0.246 ms - 163[0m
+[0mGET /health [32m200[0m 0.273 ms - 163[0m
+[0mGET /api/db-health [31m500[0m 21.695 ms - 184[0m
+[0mGET /api/redis-health [32m200[0m 3.061 ms - 148[0m
+[0mGET /metrics [32m200[0m 6.480 ms - -[0m
+
+--- Logs for postgres ---
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:43:39.317 UTC [166] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 21:43:39.317 UTC [166] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:43:39.852 UTC [167] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 21:43:39.852 UTC [167] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:43:40.566 UTC [168] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 21:43:40.566 UTC [168] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:43:41.259 UTC [169] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 21:43:41.259 UTC [169] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:54:03.103 UTC [208] FATAL:  database "devsecops" does not exist
+2026-06-05 21:58:05.900 UTC [227] FATAL:  database "devsecops" does not exist
+2026-06-05 22:04:25.033 UTC [253] FATAL:  database "devsecops" does not exist
+2026-06-05 22:12:35.906 UTC [284] FATAL:  database "devsecops" does not exist
+2026-06-05 22:12:41.964 UTC [285] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 22:12:41.964 UTC [285] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+
+--- Logs for redis ---
+1:C 05 Jun 2026 20:54:50.857 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+1:C 05 Jun 2026 20:54:50.857 * Redis version=7.4.9, bits=64, commit=00000000, modified=0, pid=1, just started
+1:C 05 Jun 2026 20:54:50.857 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+1:M 05 Jun 2026 20:54:50.858 * monotonic clock: POSIX clock_gettime
+1:M 05 Jun 2026 20:54:50.859 * Running mode=standalone, port=6379.
+1:M 05 Jun 2026 20:54:50.860 * Server initialized
+1:M 05 Jun 2026 20:54:50.861 * Ready to accept connections tcp
+1:M 05 Jun 2026 21:29:17.510 * DB saved on disk
+
+========================================
+ Final Summary
+========================================
+PASS: 29
+FAIL: 1
+WARN: 0
+
+❌ Overall Status: NEEDS FIX
+Recommendation: Fix failed items above before moving forward.
+
+Report saved to:
+/Users/elhalawany/node-app/test-reports/devsecops-test-report-2026-06-06_01-12-34.txt

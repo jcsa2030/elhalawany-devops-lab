@@ -1,0 +1,19 @@
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2026-06-06 11:17:26.231 UTC [1] LOG:  starting PostgreSQL 16.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+2026-06-06 11:17:26.232 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-06-06 11:17:26.232 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2026-06-06 11:17:26.234 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-06-06 11:17:26.234 UTC [1] LOG:  could not open file "postmaster.pid": No such file or directory
+2026-06-06 11:17:26.235 UTC [1] LOG:  could not open file "postmaster.pid": No such file or directory
+2026-06-06 11:17:26.236 UTC [33] LOG:  database system shutdown was interrupted; last known up at 2026-06-06 11:17:26 UTC
+2026-06-06 11:17:26.494 UTC [33] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-06-06 11:17:26.498 UTC [33] LOG:  redo starts at 0/195FF10
+2026-06-06 11:17:26.498 UTC [33] LOG:  invalid record length at 0/1960088: expected at least 24, got 0
+2026-06-06 11:17:26.498 UTC [33] LOG:  redo done at 0/195FFF8 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-06-06 11:17:26.503 UTC [31] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-06-06 11:17:26.510 UTC [31] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.001 s, total=0.009 s; sync files=2, longest=0.001 s, average=0.001 s; distance=0 kB, estimate=0 kB; lsn=0/1960088, redo lsn=0/1960088
+2026-06-06 11:17:26.519 UTC [1] LOG:  database system is ready to accept connections
+2026-06-06 11:17:26.519 UTC [1] LOG:  could not open file "postmaster.pid": No such file or directory
+2026-06-06 11:17:39.371 UTC [43] FATAL:  database "devsecops" does not exist

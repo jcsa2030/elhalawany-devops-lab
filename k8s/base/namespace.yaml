@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devsecops-dev
+  labels:
+    project: node-app-devsecops-lab
+    environment: dev
+    managed-by: kubernetes

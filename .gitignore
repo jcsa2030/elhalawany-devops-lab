@@ -1,32 +1,51 @@
-# Dependencies
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+
+# Local generated design outputs
+terraform/*-design-*.txt
+terraform/devops-lab-inventory.txt
+
+# Backups and local monitoring files
+backups/
+monitoring/textfile/
+
+# Node.js
 node_modules/
 
 # Environment files
-.env
-.env.dev
-.env.test
-.env.production
+.env*
+!.env.example
+
+# Security reports
+security-reports/trivy/
+
+# Local Alertmanager config
+monitoring/alertmanager/alertmanager.local.yml
+
+# Reports
+test-reports/
+daily-health-reports/
+maintenance-reports/
+recovery-reports/
+diagnostic-reports/
+k8s-admin-reports/
+
+# Sonar
+.scannerwork/
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
 
 # Logs
-logs
 *.log
-npm-debug.log*
 
-# macOS
-.DS_Store
-
-# Build folders
-dist/
-build/
-
-# Coverage
-coverage/
-
-# IDE
-.vscode/
-.idea/
-
-# Docker
-*.tar
-monitoring/alertmanager/alertmanager.local.yml
-security-reports/trivy/
+# Generated HTML
+*.html
