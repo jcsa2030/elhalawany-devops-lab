@@ -165,6 +165,7 @@ stage('OPA Policy Gate') {
                           -Dsonar.sourceEncoding=UTF-8 \
                           -Dsonar.nodejs.executable=/usr/local/opt/node@20/bin/node \
                           -Dsonar.exclusions=index.js,node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,scripts/**,security-reports/**,zap-reports/**,*.csv,*.json
+                          -Dsonar.exclusions="node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,security-reports/**,zap-reports/**,test-reports/**,recovery-reports/**,maintenance-reports/**,diagnostic-reports/**,daily-health-reports/**,k8s-admin-reports/**,backups/**,terraform/.terraform/**,terraform/*.tfstate,terraform/*.tfstate.backup,*.log,*.tar.gz,.env*,*.json,*.html,*.sh,ops-html-email-helper.sh"
                         '''
                     }
                 }
