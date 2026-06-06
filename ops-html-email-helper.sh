@@ -8,15 +8,24 @@
 # - Support optional email sending
 
 create_html_report() {
-  local TITLE="$1"
-  local TEXT_FILE="$2"
-  local HTML_FILE="$3"
+  local TITLE="${1:-DevSecOps Report}"
+  local TEXT_FILE="${2:-}"
+  local HTML_FILE="${3:-}"
 
-  if [ ! -f "$TEXT_FILE" ]; then
-    echo "ERROR: Text report not found: $TEXT_FILE"
-    return 1
+  if [ -z "$TEXT_FILE" ]; then
+    echo "WARNING: Text report path is empty. Skipping HTML report generation."
+    return 0
   fi
 
+  if [ -z "$HTML_FILE" ]; then
+    echo "WARNING: HTML report path is empty. Skipping HTML report generation."
+    return 0
+  fi
+
+  if [ ! -f "$TEXT_FILE" ]; then
+    echo "WARNING: Text report not found: $TEXT_FILE. Skipping HTML report generation."
+    return 0
+  fi
   local PASS_COUNT
   local FAIL_COUNT
   local WARN_COUNT
