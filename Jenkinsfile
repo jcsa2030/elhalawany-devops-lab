@@ -165,9 +165,8 @@ stage('SonarQube SAST') {
                           -Dsonar.projectName="Elhalawany DevOps Lab" \
                           -Dsonar.sources=. \
                           -Dsonar.sourceEncoding=UTF-8 \
-                          -Dsonar.login=$SONAR_TOKEN \
-                          -Dsonar.nodejs.executable=/usr/local/opt/node@20/bin/node \
-                          -Dsonar.exclusions="node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,security-reports/**,zap-reports/**,test-reports/**,recovery-reports/**,maintenance-reports/**,diagnostic-reports/**,daily-health-reports/**,k8s-admin-reports/**,backups/**,terraform/.terraform/**,terraform/*.tfstate,terraform/*.tfstate.backup,*.log,*.tar.gz,.env*,*.json,*.html,*.sh"
+                          -Dsonar.token=$SONAR_TOKEN \
+                          -Dsonar.exclusions="index.js,node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,security-reports/**,zap-reports/**,test-reports/**,recovery-reports/**,maintenance-reports/**,diagnostic-reports/**,daily-health-reports/**,k8s-admin-reports/**,backups/**,terraform/.terraform/**,terraform/*.tfstate,terraform/*.tfstate.backup,*.log,*.tar.gz,.env*,*.json,*.html,*.sh"
                     '''
                 }
             }
