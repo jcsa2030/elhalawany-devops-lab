@@ -153,23 +153,27 @@ stage('OPA Policy Gate') {
     }
 }
 
-                stage('SonarQube SAST') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                        sh '''
+
+stage('SonarQube SAST') {
+    steps {
+        timeout(time: 5, unit: 'MINUTES') {
+            withSonarQubeEnv('SonarQube') {
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                    sh '''
                         sonar-scanner \
                           -Dsonar.projectKey=elhalawany-devops-lab \
                           -Dsonar.projectName="Elhalawany DevOps Lab" \
                           -Dsonar.sources=. \
                           -Dsonar.sourceEncoding=UTF-8 \
+                          -Dsonar.login=$SONAR_TOKEN \
                           -Dsonar.nodejs.executable=/usr/local/opt/node@20/bin/node \
-                          -Dsonar.exclusions=index.js,node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,scripts/**,security-reports/**,zap-reports/**,*.csv,*.json
-                        '''
-                    }
+                          -Dsonar.exclusions="node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,security-reports/**,zap-reports/**,test-reports/**,recovery-reports/**,maintenance-reports/**,diagnostic-reports/**,daily-health-reports/**,k8s-admin-reports/**,backups/**,terraform/.terraform/**,terraform/*.tfstate,terraform/*.tfstate.backup,*.log,*.tar.gz,.env*,*.json,*.html,*.sh"
+                    '''
                 }
             }
         }
+    }
+}
 
         stage('SonarQube Quality Gate') {
             steps {
