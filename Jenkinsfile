@@ -176,8 +176,61 @@ stage('SonarQube SAST') {
 
         stage('SonarQube Quality Gate') {
     steps {
-        echo 'Skipping blocking SonarQube Quality Gate wait for local lab stability.'
-        echo 'SonarQube analysis was submitted successfully. Review dashboard manually if needed.'
+        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+            sh '''
+                set -e
+
+                echo "Checking SonarQube Quality Gate using API polling..."
+
+                TASK_FILE=".scannerwork/report-task.txt"
+
+                if [ ! -f "$TASK_FILE" ]; then
+                    echo "ERROR: SonarQube report-task.txt not found"
+                    exit 1
+                fi
+
+                CE_TASK_ID=$(grep "ceTaskId=" "$TASK_FILE" | cut -d'=' -f2)
+
+                if [ -z "$CE_TASK_ID" ]; then
+                    echo "ERROR: SonarQube CE task ID not found"
+                    exit 1
+                fi
+
+                echo "SonarQube CE Task ID: $CE_TASK_ID"
+
+                for i in $(seq 1 30); do
+                    STATUS=$(curl -s -u "$SONAR_TOKEN:" \
+                      "http://localhost:9000/api/ce/task?id=$CE_TASK_ID" \
+                      | python3 -c "import sys,json; print(json.load(sys.stdin)['task']['status'])")
+
+                    echo "SonarQube task status: $STATUS"
+
+                    if [ "$STATUS" = "SUCCESS" ]; then
+                        break
+                    fi
+
+                    if [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "CANCELED" ]; then
+                        echo "ERROR: SonarQube background task failed: $STATUS"
+                        exit 1
+                    fi
+
+                    sleep 10
+                done
+
+                PROJECT_STATUS=$(curl -s -u "$SONAR_TOKEN:" \
+                  "http://localhost:9000/api/qualitygates/project_status?projectKey=elhalawany-devops-lab" \
+                  | python3 -c "import sys,json; print(json.load(sys.stdin)['projectStatus']['status'])")
+
+                echo "SonarQube Quality Gate: $PROJECT_STATUS"
+
+                if [ "$PROJECT_STATUS" != "OK" ]; then
+                    echo "ERROR: SonarQube Quality Gate failed: $PROJECT_STATUS"
+                    exit 1
+                fi
+
+                echo "SonarQube Quality Gate passed."
+            '''
+        }
     }
 }
 
