@@ -1,0 +1,20 @@
+
+> node-app@1.0.0 start
+> node index.js
+
+Server running on port 3000
+Environment: dev
+Redis route enabled: /api/redis-health
+NIST controls route enabled: /api/nist-controls
+NIST summary route enabled: /api/nist-summary
+OWASP route enabled: /api/owasp-top10
+OWASP summary route enabled: /api/owasp-summary
+Redis connected successfully
+[0mGET /health [32m200[0m 3.626 ms - 161[0m
+[0mGET /health [32m200[0m 0.691 ms - 161[0m
+[0mGET /health [32m200[0m 0.381 ms - 161[0m
+[0mGET /health [32m200[0m 0.357 ms - 160[0m
+[0mGET /health [32m200[0m 0.367 ms - 161[0m
+[0mGET /api/db-health [32m200[0m 27.845 ms - 158[0m
+[0mGET /api/redis-health [32m200[0m 2.965 ms - 148[0m
+[0mGET /metrics [32m200[0m 5.965 ms - -[0m

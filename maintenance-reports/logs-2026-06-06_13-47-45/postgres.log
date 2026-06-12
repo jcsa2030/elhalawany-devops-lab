@@ -1,0 +1,57 @@
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2026-06-05 20:54:50.948 UTC [1] LOG:  starting PostgreSQL 16.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+2026-06-05 20:54:50.948 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-06-05 20:54:50.948 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2026-06-05 20:54:50.951 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-06-05 20:54:50.958 UTC [32] LOG:  database system was shut down at 2026-06-05 20:53:35 UTC
+2026-06-05 20:54:50.966 UTC [1] LOG:  database system is ready to accept connections
+2026-06-05 20:59:51.019 UTC [30] LOG:  checkpoint starting: time
+2026-06-05 20:59:51.026 UTC [30] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.002 s, sync=0.001 s, total=0.008 s; sync files=2, longest=0.001 s, average=0.001 s; distance=0 kB, estimate=0 kB; lsn=0/195FDB0, redo lsn=0/195FD78
+2026-06-05 21:08:57.938 UTC [64] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 21:08:57.938 UTC [64] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:36:57.992 UTC [140] FATAL:  database "devsecops" does not exist
+2026-06-05 21:37:03.906 UTC [142] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 21:37:03.906 UTC [142] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:43:30.405 UTC [162] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 21:43:30.405 UTC [162] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:43:36.887 UTC [163] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 21:43:36.887 UTC [163] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:43:38.016 UTC [164] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 21:43:38.016 UTC [164] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:43:38.746 UTC [165] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 21:43:38.746 UTC [165] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:43:39.317 UTC [166] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 21:43:39.317 UTC [166] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:43:39.852 UTC [167] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 21:43:39.852 UTC [167] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:43:40.566 UTC [168] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 21:43:40.566 UTC [168] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:43:41.259 UTC [169] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 21:43:41.259 UTC [169] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 21:54:03.103 UTC [208] FATAL:  database "devsecops" does not exist
+2026-06-05 21:58:05.900 UTC [227] FATAL:  database "devsecops" does not exist
+2026-06-05 22:04:25.033 UTC [253] FATAL:  database "devsecops" does not exist
+2026-06-05 22:12:35.906 UTC [284] FATAL:  database "devsecops" does not exist
+2026-06-05 22:12:41.964 UTC [285] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 22:12:41.964 UTC [285] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-05 22:21:35.759 UTC [319] FATAL:  database "devsecops" does not exist
+2026-06-05 22:21:41.692 UTC [320] FATAL:  password authentication failed for user "devopsuser"
+2026-06-05 22:21:41.692 UTC [320] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-06 10:38:13.415 UTC [383] FATAL:  password authentication failed for user "devopsuser"
+2026-06-06 10:38:13.415 UTC [383] DETAIL:  Role "devopsuser" does not exist.
+	Connection matched file "/var/lib/postgresql/data/pg_hba.conf" line 128: "host all all all scram-sha-256"
+2026-06-06 10:39:35.762 UTC [394] FATAL:  database "devsecops" does not exist

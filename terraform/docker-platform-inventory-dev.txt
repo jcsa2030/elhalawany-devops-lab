@@ -1,0 +1,17 @@
+Docker Platform Inventory - dev
+
+Current Running Containers:
+- Application : elhalawany-app
+- Nginx       : elhalawany-nginx
+- PostgreSQL  : elhalawany-postgres
+- Redis       : elhalawany-redis
+- Vault       : vault
+- Prometheus  : prometheus
+- Grafana     : grafana
+- SonarQube   : sonarqube
+
+Terraform Objective:
+- Prepare Docker provider
+- Document current Docker infrastructure
+- Prepare controlled migration from docker-compose to Terraform-managed infrastructure
+- Prepare future migration to Kubernetes

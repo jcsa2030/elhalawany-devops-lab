@@ -1,0 +1,826 @@
+==================================================
+ DevSecOps Lab Recovery Report
+ Date: 2026-06-06_14-00-42
+ Namespace: devsecops-dev
+ Project: /Users/elhalawany/node-app
+==================================================
+
+==================================================
+1. Pre-Recovery Status
+==================================================
+
+>>> Check Kubernetes nodes
+NAME                    STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                       KERNEL-VERSION             CONTAINER-RUNTIME
+desktop-control-plane   Ready    control-plane   14h   v1.36.1   172.26.0.2    <none>        Debian GNU/Linux 13 (trixie)   6.12.76-linuxkit (amd64)   containerd://2.3.1
+✅ SUCCESS: Check Kubernetes nodes
+
+>>> Check namespace resources
+NAME                           READY   STATUS    RESTARTS   AGE   IP            NODE                    NOMINATED NODE   READINESS GATES
+pod/nginx-85cb54f749-dnjb7     1/1     Running   0          14h   10.244.0.19   desktop-control-plane   <none>           <none>
+pod/node-app-65db9647f-cr5dq   1/1     Running   0          13m   10.244.0.30   desktop-control-plane   <none>           <none>
+pod/postgres-c8876b9b8-g2nrv   1/1     Running   0          14h   10.244.0.21   desktop-control-plane   <none>           <none>
+pod/redis-88f6ffbc8-wl9lx      1/1     Running   0          14h   10.244.0.22   desktop-control-plane   <none>           <none>
+
+NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE   SELECTOR
+service/nginx      NodePort    10.96.149.83    <none>        80:30080/TCP   14h   app=nginx
+service/node-app   ClusterIP   10.96.140.111   <none>        3000/TCP       14h   app=node-app
+service/postgres   ClusterIP   10.96.102.71    <none>        5432/TCP       14h   app=postgres
+service/redis      ClusterIP   10.96.126.23    <none>        6379/TCP       14h   app=redis
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                            SELECTOR
+deployment.apps/nginx      1/1     1            1           14h   nginx        nginx:alpine                                      app=nginx
+deployment.apps/node-app   1/1     1            1           14h   node-app     ghcr.io/jcsa2030/elhalawany-devops-lab:security   app=node-app
+deployment.apps/postgres   1/1     1            1           14h   postgres     postgres:16-alpine                                app=postgres
+deployment.apps/redis      1/1     1            1           14h   redis        redis:7-alpine                                    app=redis
+
+NAME                                  DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES                                            SELECTOR
+replicaset.apps/nginx-85cb54f749      1         1         1       14h   nginx        nginx:alpine                                      app=nginx,pod-template-hash=85cb54f749
+replicaset.apps/node-app-65db9647f    1         1         1       13m   node-app     ghcr.io/jcsa2030/elhalawany-devops-lab:security   app=node-app,pod-template-hash=65db9647f
+replicaset.apps/node-app-77c6458fd9   0         0         0       21m   node-app     ghcr.io/jcsa2030/elhalawany-devops-lab:security   app=node-app,pod-template-hash=77c6458fd9
+replicaset.apps/node-app-78ff7db85d   0         0         0       14h   node-app     ghcr.io/jcsa2030/elhalawany-devops-lab:security   app=node-app,pod-template-hash=78ff7db85d
+replicaset.apps/node-app-846dd465     0         0         0       13h   node-app     ghcr.io/jcsa2030/elhalawany-devops-lab:security   app=node-app,pod-template-hash=846dd465
+replicaset.apps/postgres-c8876b9b8    1         1         1       14h   postgres     postgres:16-alpine                                app=postgres,pod-template-hash=c8876b9b8
+replicaset.apps/redis-88f6ffbc8       1         1         1       14h   redis        redis:7-alpine                                    app=redis,pod-template-hash=88f6ffbc8
+
+NAME                                               REFERENCE             TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/node-app-hpa   Deployment/node-app   cpu: 8%/70%   1         3         1          14h
+✅ SUCCESS: Check namespace resources
+
+>>> Check HPA
+NAME           REFERENCE             TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+node-app-hpa   Deployment/node-app   cpu: 8%/70%   1         3         1          14h
+✅ SUCCESS: Check HPA
+
+>>> Check PVC
+NAME           STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+postgres-pvc   Bound    pvc-f87ca63c-00b6-4f17-bcf6-4400510bea3c   1Gi        RWO            standard       <unset>                 14h
+✅ SUCCESS: Check PVC
+
+==================================================
+2. Stop Existing Port-Forward Sessions
+==================================================
+
+>>> Stop old kubectl port-forward sessions
+✅ SUCCESS: Stop old kubectl port-forward sessions
+
+==================================================
+3. Validate Manifests Before Recovery
+==================================================
+
+>>> Kustomize build validation
+✅ SUCCESS: Kustomize build validation
+
+>>> Kubernetes dry-run validation
+namespace/devsecops-dev configured (dry run)
+configmap/nginx-config configured (dry run)
+configmap/node-app-config configured (dry run)
+secret/node-app-secret configured (dry run)
+secret/postgres-secret configured (dry run)
+service/nginx configured (dry run)
+service/node-app configured (dry run)
+service/postgres configured (dry run)
+service/redis configured (dry run)
+persistentvolumeclaim/postgres-pvc configured (dry run)
+deployment.apps/nginx configured (dry run)
+deployment.apps/node-app configured (dry run)
+deployment.apps/postgres configured (dry run)
+deployment.apps/redis configured (dry run)
+horizontalpodautoscaler.autoscaling/node-app-hpa configured (dry run)
+ingress.networking.k8s.io/node-app-ingress configured (dry run)
+✅ SUCCESS: Kubernetes dry-run validation
+
+==================================================
+4. Reapply Desired Kubernetes State
+==================================================
+
+>>> Apply Kubernetes manifests
+namespace/devsecops-dev unchanged
+configmap/nginx-config unchanged
+configmap/node-app-config unchanged
+secret/node-app-secret configured
+secret/postgres-secret configured
+service/nginx unchanged
+service/node-app unchanged
+service/postgres unchanged
+service/redis unchanged
+persistentvolumeclaim/postgres-pvc unchanged
+deployment.apps/nginx unchanged
+deployment.apps/node-app unchanged
+deployment.apps/postgres unchanged
+deployment.apps/redis unchanged
+horizontalpodautoscaler.autoscaling/node-app-hpa unchanged
+ingress.networking.k8s.io/node-app-ingress unchanged
+✅ SUCCESS: Apply Kubernetes manifests
+
+==================================================
+5. Restart Core Deployments Safely
+==================================================
+
+>>> Restart deployment redis
+deployment.apps/redis restarted
+✅ SUCCESS: Restart deployment redis
+
+>>> Wait for deployment redis rollout
+Waiting for deployment "redis" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "redis" rollout to finish: 1 old replicas are pending termination...
+deployment "redis" successfully rolled out
+✅ SUCCESS: Wait for deployment redis rollout
+
+>>> Restart deployment postgres
+deployment.apps/postgres restarted
+✅ SUCCESS: Restart deployment postgres
+
+>>> Wait for deployment postgres rollout
+Waiting for deployment "postgres" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "postgres" rollout to finish: 1 old replicas are pending termination...
+deployment "postgres" successfully rolled out
+✅ SUCCESS: Wait for deployment postgres rollout
+
+>>> Restart deployment node-app
+deployment.apps/node-app restarted
+✅ SUCCESS: Restart deployment node-app
+
+>>> Wait for deployment node-app rollout
+Waiting for deployment "node-app" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "node-app" rollout to finish: 1 old replicas are pending termination...
+deployment "node-app" successfully rolled out
+✅ SUCCESS: Wait for deployment node-app rollout
+
+>>> Restart deployment nginx
+deployment.apps/nginx restarted
+✅ SUCCESS: Restart deployment nginx
+
+>>> Wait for deployment nginx rollout
+Waiting for deployment "nginx" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "nginx" rollout to finish: 1 old replicas are pending termination...
+deployment "nginx" successfully rolled out
+✅ SUCCESS: Wait for deployment nginx rollout
+
+==================================================
+6. Wait for Pods to Become Ready
+==================================================
+
+>>> Wait for Redis pod readiness
+pod/redis-6cdf7c74cd-585fc condition met
+✅ SUCCESS: Wait for Redis pod readiness
+
+>>> Wait for PostgreSQL pod readiness
+pod/postgres-7bdd876875-r4rsl condition met
+✅ SUCCESS: Wait for PostgreSQL pod readiness
+
+>>> Wait for Node.js pod readiness
+pod/node-app-696cdc8cd5-xhbb8 condition met
+✅ SUCCESS: Wait for Node.js pod readiness
+
+>>> Wait for Nginx pod readiness
+pod/nginx-6b5fd8c57f-hqzmc condition met
+error: timed out waiting for the condition on pods/nginx-85cb54f749-dnjb7
+❌ FAILED: Wait for Nginx pod readiness
+Command: kubectl wait --for=condition=Ready pod -l app=nginx -n devsecops-dev --timeout=180s
+
+==================================================
+7. Validate PostgreSQL
+==================================================
+
+>>> Check PostgreSQL readiness
+/var/run/postgresql:5432 - accepting connections
+✅ SUCCESS: Check PostgreSQL readiness
+
+>>> Check PostgreSQL database exists
+                                                         List of databases
+    Name     |   Owner   | Encoding | Locale Provider |  Collate   |   Ctype    | ICU Locale | ICU Rules |    Access privileges    
+-------------+-----------+----------+-----------------+------------+------------+------------+-----------+-------------------------
+ devsecopsdb | devsecops | UTF8     | libc            | en_US.utf8 | en_US.utf8 |            |           | 
+ postgres    | devsecops | UTF8     | libc            | en_US.utf8 | en_US.utf8 |            |           | 
+ template0   | devsecops | UTF8     | libc            | en_US.utf8 | en_US.utf8 |            |           | =c/devsecops           +
+             |           |          |                 |            |            |            |           | devsecops=CTc/devsecops
+ template1   | devsecops | UTF8     | libc            | en_US.utf8 | en_US.utf8 |            |           | =c/devsecops           +
+             |           |          |                 |            |            |            |           | devsecops=CTc/devsecops
+(4 rows)
+
+✅ SUCCESS: Check PostgreSQL database exists
+
+==================================================
+8. Validate Redis
+==================================================
+
+>>> Check Redis PING
+PONG
+✅ SUCCESS: Check Redis PING
+
+==================================================
+9. Validate Node.js Runtime Environment
+==================================================
+
+>>> Check Node.js POSTGRES environment
+POSTGRES_DB=devsecopsdb
+POSTGRES_HOST=postgres
+POSTGRES_USER=devsecops
+POSTGRES_PASSWORD=devsecops_password_change_me
+POSTGRES_PORT=5432
+POSTGRES_SERVICE_PORT=5432
+POSTGRES_PORT_5432_TCP_ADDR=10.96.102.71
+POSTGRES_PORT_5432_TCP_PORT=5432
+POSTGRES_PORT_5432_TCP=tcp://10.96.102.71:5432
+POSTGRES_PORT_5432_TCP_PROTO=tcp
+POSTGRES_SERVICE_HOST=10.96.102.71
+✅ SUCCESS: Check Node.js POSTGRES environment
+
+>>> Check Node.js REDIS environment
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PORT_6379_TCP_ADDR=10.96.126.23
+REDIS_SERVICE_HOST=10.96.126.23
+REDIS_PORT_6379_TCP_PROTO=tcp
+REDIS_SERVICE_PORT=6379
+REDIS_PORT_6379_TCP=tcp://10.96.126.23:6379
+REDIS_PORT_6379_TCP_PORT=6379
+✅ SUCCESS: Check Node.js REDIS environment
+
+>>> Check network connectivity from Node.js to PostgreSQL
+postgres (10.96.102.71:5432) open
+✅ SUCCESS: Check network connectivity from Node.js to PostgreSQL
+
+>>> Check network connectivity from Node.js to Redis
+redis (10.96.126.23:6379) open
+✅ SUCCESS: Check network connectivity from Node.js to Redis
+
+==================================================
+10. Validate Metrics Server and HPA
+==================================================
+
+>>> Check metrics-server node metrics
+NAME                    CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   
+desktop-control-plane   231m         1%       1358Mi          17%         
+✅ SUCCESS: Check metrics-server node metrics
+
+>>> Check pod metrics
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-6b5fd8c57f-hqzmc      0m           13Mi            
+node-app-696cdc8cd5-xhbb8   8m           47Mi            
+postgres-7bdd876875-r4rsl   1m           26Mi            
+redis-6cdf7c74cd-585fc      6m           7Mi             
+✅ SUCCESS: Check pod metrics
+
+>>> Check HPA status
+NAME           REFERENCE             TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+node-app-hpa   Deployment/node-app   cpu: 8%/70%   1         3         1          14h
+✅ SUCCESS: Check HPA status
+
+==================================================
+11. Application End-to-End Test
+==================================================
+✅ Port-forward started on localhost:18084
+
+>>> Testing Application health: http://localhost:18084/health
+{"status":"UP","application":"Elhalawany Dev Environment","environment":"dev","port":"3000","uptime_seconds":197.645652249,"timestamp":"2026-06-06T11:04:05.393Z"}
+✅ PASS: Application health
+
+>>> Testing PostgreSQL app health: http://localhost:18084/api/db-health
+{"status":"UP","database":"PostgreSQL","message":"Database connection successful","db_time":"2026-06-06T11:04:05.459Z","timestamp":"2026-06-06T11:04:05.462Z"}
+✅ PASS: PostgreSQL app health
+
+>>> Testing Redis app health: http://localhost:18084/api/redis-health
+{"status":"UP","cache":"Redis","message":"Redis connection successful","test_value":"Redis cache is working","timestamp":"2026-06-06T11:04:05.503Z"}
+✅ PASS: Redis app health
+
+>>> Testing Security metrics: http://localhost:18084/metrics
+# HELP process_cpu_user_seconds_total Total user CPU time spent in seconds.
+# TYPE process_cpu_user_seconds_total counter
+process_cpu_user_seconds_total 1.324592
+
+# HELP process_cpu_system_seconds_total Total system CPU time spent in seconds.
+# TYPE process_cpu_system_seconds_total counter
+process_cpu_system_seconds_total 0.445167
+
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 1.769759
+
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1780743648
+
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 77471744
+
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 758501376
+
+# HELP process_heap_bytes Process heap size in bytes.
+# TYPE process_heap_bytes gauge
+process_heap_bytes 106856448
+
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 25
+
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 1073741816
+
+# HELP nodejs_eventloop_lag_seconds Lag of event loop in seconds.
+# TYPE nodejs_eventloop_lag_seconds gauge
+nodejs_eventloop_lag_seconds 0
+
+# HELP nodejs_eventloop_lag_min_seconds The minimum recorded event loop delay.
+# TYPE nodejs_eventloop_lag_min_seconds gauge
+nodejs_eventloop_lag_min_seconds 0.006610944
+
+# HELP nodejs_eventloop_lag_max_seconds The maximum recorded event loop delay.
+# TYPE nodejs_eventloop_lag_max_seconds gauge
+nodejs_eventloop_lag_max_seconds 0.101842943
+
+# HELP nodejs_eventloop_lag_mean_seconds The mean of the recorded event loop delays.
+# TYPE nodejs_eventloop_lag_mean_seconds gauge
+nodejs_eventloop_lag_mean_seconds 0.010997300735482421
+
+# HELP nodejs_eventloop_lag_stddev_seconds The standard deviation of the recorded event loop delays.
+# TYPE nodejs_eventloop_lag_stddev_seconds gauge
+nodejs_eventloop_lag_stddev_seconds 0.0010235491274473488
+
+# HELP nodejs_eventloop_lag_p50_seconds The 50th percentile of the recorded event loop delays.
+# TYPE nodejs_eventloop_lag_p50_seconds gauge
+nodejs_eventloop_lag_p50_seconds 0.010993663
+
+# HELP nodejs_eventloop_lag_p90_seconds The 90th percentile of the recorded event loop delays.
+# TYPE nodejs_eventloop_lag_p90_seconds gauge
+nodejs_eventloop_lag_p90_seconds 0.011157503
+
+# HELP nodejs_eventloop_lag_p99_seconds The 99th percentile of the recorded event loop delays.
+# TYPE nodejs_eventloop_lag_p99_seconds gauge
+nodejs_eventloop_lag_p99_seconds 0.011337727
+
+# HELP nodejs_active_resources Number of active resources that are currently keeping the event loop alive, grouped by async resource type.
+# TYPE nodejs_active_resources gauge
+nodejs_active_resources{type="PipeWrap"} 2
+nodejs_active_resources{type="TCPSocketWrap"} 3
+nodejs_active_resources{type="TCPServerWrap"} 1
+nodejs_active_resources{type="Timeout"} 1
+nodejs_active_resources{type="Immediate"} 1
+
+# HELP nodejs_active_resources_total Total number of active resources.
+# TYPE nodejs_active_resources_total gauge
+nodejs_active_resources_total 8
+
+# HELP nodejs_active_handles Number of active libuv handles grouped by handle type. Every handle type is C++ class name.
+# TYPE nodejs_active_handles gauge
+nodejs_active_handles{type="Socket"} 5
+nodejs_active_handles{type="Server"} 1
+
+# HELP nodejs_active_handles_total Total number of active handles.
+# TYPE nodejs_active_handles_total gauge
+nodejs_active_handles_total 6
+
+# HELP nodejs_active_requests Number of active libuv requests grouped by request type. Every request type is C++ class name.
+# TYPE nodejs_active_requests gauge
+
+# HELP nodejs_active_requests_total Total number of active requests.
+# TYPE nodejs_active_requests_total gauge
+nodejs_active_requests_total 0
+
+# HELP nodejs_heap_size_total_bytes Process heap size from Node.js in bytes.
+# TYPE nodejs_heap_size_total_bytes gauge
+nodejs_heap_size_total_bytes 16506880
+
+# HELP nodejs_heap_size_used_bytes Process heap size used from Node.js in bytes.
+# TYPE nodejs_heap_size_used_bytes gauge
+nodejs_heap_size_used_bytes 14952688
+
+# HELP nodejs_external_memory_bytes Node.js external memory size in bytes.
+# TYPE nodejs_external_memory_bytes gauge
+nodejs_external_memory_bytes 2378389
+
+# HELP nodejs_heap_space_size_total_bytes Process heap space size total from Node.js in bytes.
+# TYPE nodejs_heap_space_size_total_bytes gauge
+nodejs_heap_space_size_total_bytes{space="read_only"} 0
+nodejs_heap_space_size_total_bytes{space="new"} 1048576
+nodejs_heap_space_size_total_bytes{space="old"} 12107776
+nodejs_heap_space_size_total_bytes{space="code"} 1048576
+nodejs_heap_space_size_total_bytes{space="shared"} 0
+nodejs_heap_space_size_total_bytes{space="trusted"} 2146304
+nodejs_heap_space_size_total_bytes{space="new_large_object"} 0
+nodejs_heap_space_size_total_bytes{space="large_object"} 0
+nodejs_heap_space_size_total_bytes{space="code_large_object"} 155648
+nodejs_heap_space_size_total_bytes{space="shared_large_object"} 0
+nodejs_heap_space_size_total_bytes{space="trusted_large_object"} 0
+
+# HELP nodejs_heap_space_size_used_bytes Process heap space size used from Node.js in bytes.
+# TYPE nodejs_heap_space_size_used_bytes gauge
+nodejs_heap_space_size_used_bytes{space="read_only"} 0
+nodejs_heap_space_size_used_bytes{space="new"} 768960
+nodejs_heap_space_size_used_bytes{space="old"} 11324376
+nodejs_heap_space_size_used_bytes{space="code"} 823104
+nodejs_heap_space_size_used_bytes{space="shared"} 0
+nodejs_heap_space_size_used_bytes{space="trusted"} 1907360
+nodejs_heap_space_size_used_bytes{space="new_large_object"} 0
+nodejs_heap_space_size_used_bytes{space="large_object"} 0
+nodejs_heap_space_size_used_bytes{space="code_large_object"} 138432
+nodejs_heap_space_size_used_bytes{space="shared_large_object"} 0
+nodejs_heap_space_size_used_bytes{space="trusted_large_object"} 0
+
+# HELP nodejs_heap_space_size_available_bytes Process heap space size available from Node.js in bytes.
+# TYPE nodejs_heap_space_size_available_bytes gauge
+nodejs_heap_space_size_available_bytes{space="read_only"} 0
+nodejs_heap_space_size_available_bytes{space="new"} 261952
+nodejs_heap_space_size_available_bytes{space="old"} 569112
+nodejs_heap_space_size_available_bytes{space="code"} 159808
+nodejs_heap_space_size_available_bytes{space="shared"} 0
+nodejs_heap_space_size_available_bytes{space="trusted"} 199064
+nodejs_heap_space_size_available_bytes{space="new_large_object"} 1048576
+nodejs_heap_space_size_available_bytes{space="large_object"} 0
+nodejs_heap_space_size_available_bytes{space="code_large_object"} 0
+nodejs_heap_space_size_available_bytes{space="shared_large_object"} 0
+nodejs_heap_space_size_available_bytes{space="trusted_large_object"} 0
+
+# HELP nodejs_version_info Node.js version info.
+# TYPE nodejs_version_info gauge
+nodejs_version_info{version="v22.22.3",major="22",minor="22",patch="3"} 1
+
+# HELP nodejs_gc_duration_seconds Garbage collection duration by kind, one of major, minor, incremental or weakcb.
+# TYPE nodejs_gc_duration_seconds histogram
+nodejs_gc_duration_seconds_bucket{le="0.001",kind="minor"} 4
+nodejs_gc_duration_seconds_bucket{le="0.01",kind="minor"} 5
+nodejs_gc_duration_seconds_bucket{le="0.1",kind="minor"} 5
+nodejs_gc_duration_seconds_bucket{le="1",kind="minor"} 5
+nodejs_gc_duration_seconds_bucket{le="2",kind="minor"} 5
+nodejs_gc_duration_seconds_bucket{le="5",kind="minor"} 5
+nodejs_gc_duration_seconds_bucket{le="+Inf",kind="minor"} 5
+nodejs_gc_duration_seconds_sum{kind="minor"} 0.003529100894927978
+nodejs_gc_duration_seconds_count{kind="minor"} 5
+nodejs_gc_duration_seconds_bucket{le="0.001",kind="incremental"} 2
+nodejs_gc_duration_seconds_bucket{le="0.01",kind="incremental"} 2
+nodejs_gc_duration_seconds_bucket{le="0.1",kind="incremental"} 2
+nodejs_gc_duration_seconds_bucket{le="1",kind="incremental"} 2
+nodejs_gc_duration_seconds_bucket{le="2",kind="incremental"} 2
+nodejs_gc_duration_seconds_bucket{le="5",kind="incremental"} 2
+nodejs_gc_duration_seconds_bucket{le="+Inf",kind="incremental"} 2
+nodejs_gc_duration_seconds_sum{kind="incremental"} 0.0013563030958175658
+nodejs_gc_duration_seconds_count{kind="incremental"} 2
+nodejs_gc_duration_seconds_bucket{le="0.001",kind="major"} 0
+nodejs_gc_duration_seconds_bucket{le="0.01",kind="major"} 1
+nodejs_gc_duration_seconds_bucket{le="0.1",kind="major"} 2
+nodejs_gc_duration_seconds_bucket{le="1",kind="major"} 2
+nodejs_gc_duration_seconds_bucket{le="2",kind="major"} 2
+nodejs_gc_duration_seconds_bucket{le="5",kind="major"} 2
+nodejs_gc_duration_seconds_bucket{le="+Inf",kind="major"} 2
+nodejs_gc_duration_seconds_sum{kind="major"} 0.08613889598846436
+nodejs_gc_duration_seconds_count{kind="major"} 2
+
+# HELP devsecops_http_requests_total Total HTTP requests
+# TYPE devsecops_http_requests_total counter
+devsecops_http_requests_total{method="GET",route="/health",status="200"} 28
+devsecops_http_requests_total{method="GET",route="/api/db-health",status="200"} 1
+devsecops_http_requests_total{method="GET",route="/api/redis-health",status="200"} 1
+
+# HELP security_compliance_score Overall enterprise security compliance score
+# TYPE security_compliance_score gauge
+security_compliance_score 100
+
+# HELP security_release_success_total Release success indicator
+# TYPE security_release_success_total gauge
+security_release_success_total 1
+
+# HELP security_uat_success_total UAT deployment success indicator
+# TYPE security_uat_success_total gauge
+security_uat_success_total 1
+
+# HELP security_production_success_total Production deployment success indicator
+# TYPE security_production_success_total gauge
+security_production_success_total 1
+
+# HELP security_zap_fail_new OWASP ZAP new failed findings
+# TYPE security_zap_fail_new gauge
+security_zap_fail_new 0
+
+# HELP security_zap_warn_new OWASP ZAP new warning findings
+# TYPE security_zap_warn_new gauge
+security_zap_warn_new 0
+
+# HELP security_sonar_quality_gate_pass SonarQube Quality Gate pass indicator
+# TYPE security_sonar_quality_gate_pass gauge
+security_sonar_quality_gate_pass 1
+
+# HELP security_opa_policy_gate_pass OPA Policy Gate pass indicator
+# TYPE security_opa_policy_gate_pass gauge
+security_opa_policy_gate_pass 1
+
+# HELP security_gitleaks_pass GitLeaks scan pass indicator
+# TYPE security_gitleaks_pass gauge
+security_gitleaks_pass 1
+✅ PASS: Security metrics
+
+==================================================
+12. Collect Recent Events
+==================================================
+
+>>> Collect recent namespace events
+3m3s        Warning   FailedComputeMetricsReplicas   horizontalpodautoscaler/node-app-hpa   invalid metrics (1 invalid out of 1), first error is: failed to get cpu resource metric value: failed to get cpu utilization: unable to get metrics for resource cpu: no metrics returned from resource metrics API
+2m48s       Warning   FailedComputeMetricsReplicas   horizontalpodautoscaler/node-app-hpa   invalid metrics (1 invalid out of 1), first error is: failed to get cpu resource metric value: failed to get cpu utilization: did not receive metrics for targeted pods (pods might be unready)
+2m48s       Warning   FailedGetResourceMetric        horizontalpodautoscaler/node-app-hpa   failed to get cpu utilization: did not receive metrics for targeted pods (pods might be unready)
+24m         Normal    SuccessfulCreate               replicaset/node-app-77c6458fd9         Created pod: node-app-77c6458fd9-crflb
+24m         Normal    Scheduled                      pod/node-app-77c6458fd9-crflb          Successfully assigned devsecops-dev/node-app-77c6458fd9-crflb to desktop-control-plane
+24m         Normal    ScalingReplicaSet              deployment/node-app                    Scaled up replica set node-app-77c6458fd9 from 0 to 1
+24m         Normal    Pulling                        pod/node-app-77c6458fd9-crflb          Pulling image "ghcr.io/jcsa2030/elhalawany-devops-lab:security"
+24m         Normal    Started                        pod/node-app-77c6458fd9-crflb          Container started
+24m         Normal    Created                        pod/node-app-77c6458fd9-crflb          Container created
+24m         Normal    Pulled                         pod/node-app-77c6458fd9-crflb          Successfully pulled image "ghcr.io/jcsa2030/elhalawany-devops-lab:security" in 3.293s (3.293s including waiting). Image size: 139062696 bytes.
+24m         Normal    Killing                        pod/node-app-846dd465-jnmkl            Stopping container node-app
+24m         Normal    ScalingReplicaSet              deployment/node-app                    Scaled down replica set node-app-846dd465 from 1 to 0
+24m         Normal    SuccessfulDelete               replicaset/node-app-846dd465           Deleted pod: node-app-846dd465-jnmkl
+16m         Normal    Pulling                        pod/node-app-65db9647f-cr5dq           Pulling image "ghcr.io/jcsa2030/elhalawany-devops-lab:security"
+16m         Normal    Pulled                         pod/node-app-65db9647f-cr5dq           Successfully pulled image "ghcr.io/jcsa2030/elhalawany-devops-lab:security" in 27ms (27ms including waiting). Image size: 139062696 bytes.
+16m         Normal    Scheduled                      pod/node-app-65db9647f-cr5dq           Successfully assigned devsecops-dev/node-app-65db9647f-cr5dq to desktop-control-plane
+16m         Normal    SuccessfulCreate               replicaset/node-app-65db9647f          Created pod: node-app-65db9647f-cr5dq
+16m         Normal    ScalingReplicaSet              deployment/node-app                    Scaled up replica set node-app-65db9647f from 0 to 1
+16m         Normal    Started                        pod/node-app-65db9647f-cr5dq           Container started
+16m         Normal    Created                        pod/node-app-65db9647f-cr5dq           Container created
+16m         Normal    SuccessfulDelete               replicaset/node-app-77c6458fd9         Deleted pod: node-app-77c6458fd9-crflb
+16m         Normal    Killing                        pod/node-app-77c6458fd9-crflb          Stopping container node-app
+16m         Normal    ScalingReplicaSet              deployment/node-app                    Scaled down replica set node-app-77c6458fd9 from 1 to 0
+3m21s       Normal    Scheduled                      pod/redis-6cdf7c74cd-585fc             Successfully assigned devsecops-dev/redis-6cdf7c74cd-585fc to desktop-control-plane
+3m21s       Normal    Pulled                         pod/redis-6cdf7c74cd-585fc             Container image "redis:7-alpine" already present on machine and can be accessed by the pod
+3m21s       Normal    Created                        pod/redis-6cdf7c74cd-585fc             Container created
+3m21s       Normal    Started                        pod/redis-6cdf7c74cd-585fc             Container started
+3m21s       Normal    SuccessfulCreate               replicaset/redis-6cdf7c74cd            Created pod: redis-6cdf7c74cd-585fc
+3m21s       Normal    Killing                        pod/redis-88f6ffbc8-wl9lx              Stopping container redis
+3m21s       Normal    SuccessfulDelete               replicaset/redis-88f6ffbc8             Deleted pod: redis-88f6ffbc8-wl9lx
+3m21s       Normal    ScalingReplicaSet              deployment/redis                       Scaled up replica set redis-6cdf7c74cd from 0 to 1
+3m21s       Normal    ScalingReplicaSet              deployment/redis                       Scaled down replica set redis-88f6ffbc8 from 1 to 0
+3m20s       Normal    Pulled                         pod/postgres-7bdd876875-r4rsl          Container image "postgres:16-alpine" already present on machine and can be accessed by the pod
+3m20s       Normal    Scheduled                      pod/postgres-7bdd876875-r4rsl          Successfully assigned devsecops-dev/postgres-7bdd876875-r4rsl to desktop-control-plane
+3m20s       Normal    Killing                        pod/postgres-c8876b9b8-g2nrv           Stopping container postgres
+3m20s       Normal    SuccessfulCreate               replicaset/postgres-7bdd876875         Created pod: postgres-7bdd876875-r4rsl
+3m20s       Normal    Started                        pod/postgres-7bdd876875-r4rsl          Container started
+3m20s       Normal    Created                        pod/postgres-7bdd876875-r4rsl          Container created
+3m20s       Normal    Scheduled                      pod/node-app-696cdc8cd5-xhbb8          Successfully assigned devsecops-dev/node-app-696cdc8cd5-xhbb8 to desktop-control-plane
+3m20s       Normal    SuccessfulCreate               replicaset/node-app-696cdc8cd5         Created pod: node-app-696cdc8cd5-xhbb8
+3m20s       Normal    ScalingReplicaSet              deployment/node-app                    Scaled up replica set node-app-696cdc8cd5 from 0 to 1
+3m20s       Normal    ScalingReplicaSet              deployment/postgres                    Scaled down replica set postgres-c8876b9b8 from 1 to 0
+3m20s       Normal    SuccessfulDelete               replicaset/postgres-c8876b9b8          Deleted pod: postgres-c8876b9b8-g2nrv
+3m20s       Normal    ScalingReplicaSet              deployment/postgres                    Scaled up replica set postgres-7bdd876875 from 0 to 1
+3m19s       Normal    Pulling                        pod/node-app-696cdc8cd5-xhbb8          Pulling image "ghcr.io/jcsa2030/elhalawany-devops-lab:security"
+3m19s       Normal    Pulled                         pod/node-app-696cdc8cd5-xhbb8          Successfully pulled image "ghcr.io/jcsa2030/elhalawany-devops-lab:security" in 32ms (32ms including waiting). Image size: 139062696 bytes.
+3m19s       Normal    Created                        pod/node-app-696cdc8cd5-xhbb8          Container created
+3m19s       Normal    Started                        pod/node-app-696cdc8cd5-xhbb8          Container started
+3m8s        Normal    SuccessfulDelete               replicaset/node-app-65db9647f          Deleted pod: node-app-65db9647f-cr5dq
+3m8s        Normal    Scheduled                      pod/nginx-6b5fd8c57f-hqzmc             Successfully assigned devsecops-dev/nginx-6b5fd8c57f-hqzmc to desktop-control-plane
+3m8s        Normal    ScalingReplicaSet              deployment/node-app                    Scaled down replica set node-app-65db9647f from 1 to 0
+3m8s        Normal    Killing                        pod/node-app-65db9647f-cr5dq           Stopping container node-app
+3m8s        Normal    ScalingReplicaSet              deployment/nginx                       Scaled up replica set nginx-6b5fd8c57f from 0 to 1
+3m8s        Normal    SuccessfulCreate               replicaset/nginx-6b5fd8c57f            Created pod: nginx-6b5fd8c57f-hqzmc
+3m7s        Normal    ScalingReplicaSet              deployment/nginx                       Scaled down replica set nginx-85cb54f749 from 1 to 0
+3m7s        Normal    SuccessfulDelete               replicaset/nginx-85cb54f749            Deleted pod: nginx-85cb54f749-dnjb7
+3m7s        Normal    Killing                        pod/nginx-85cb54f749-dnjb7             Stopping container nginx
+3m7s        Normal    Started                        pod/nginx-6b5fd8c57f-hqzmc             Container started
+3m7s        Normal    Created                        pod/nginx-6b5fd8c57f-hqzmc             Container created
+3m7s        Normal    Pulled                         pod/nginx-6b5fd8c57f-hqzmc             Container image "nginx:alpine" already present on machine and can be accessed by the pod
+✅ SUCCESS: Collect recent namespace events
+
+==================================================
+13. Collect Logs After Recovery
+==================================================
+Saved logs: /Users/elhalawany/node-app/recovery-reports/logs-2026-06-06_14-00-42/nginx.log
+Saved logs: /Users/elhalawany/node-app/recovery-reports/logs-2026-06-06_14-00-42/node-app.log
+Saved logs: /Users/elhalawany/node-app/recovery-reports/logs-2026-06-06_14-00-42/postgres.log
+Saved logs: /Users/elhalawany/node-app/recovery-reports/logs-2026-06-06_14-00-42/redis.log
+
+==================================================
+14. Terraform and Docker Validation
+==================================================
+
+>>> Terraform validate
+[32m[1mSuccess![0m The configuration is valid.
+[0m
+✅ SUCCESS: Terraform validate
+
+>>> Docker status
+CONTAINER ID   IMAGE                             COMMAND                  CREATED        STATUS                PORTS                                         NAMES
+96a868d6d85c   nginx:alpine                      "/docker-entrypoint.…"   13 hours ago   Up 13 hours           0.0.0.0:8080->80/tcp, [::]:8080->80/tcp       elhalawany-nginx
+5a789fab7181   778a74be4abb                      "docker-entrypoint.s…"   13 hours ago   Up 13 hours           3000/tcp                                      elhalawany-app
+e41f857f0069   postgres:16-alpine                "docker-entrypoint.s…"   13 hours ago   Up 13 hours           5432/tcp                                      elhalawany-postgres
+b502c9e6ff84   redis:7-alpine                    "docker-entrypoint.s…"   13 hours ago   Up 13 hours           6379/tcp                                      elhalawany-redis
+9fa7f5fa176b   7e8ff0a32da3                      "/docker-entrypoint.…"   15 hours ago   Up 15 hours           0.0.0.0:8089->80/tcp                          node-app-devsecops-lab-dev-nginx-tf
+0336c8ba7da6   b8ecbc8c886d                      "docker-entrypoint.s…"   15 hours ago   Up 15 hours           0.0.0.0:8090->3000/tcp                        node-app-devsecops-lab-dev-app-tf
+036a5311b3ce   16bc17c64a57                      "docker-entrypoint.s…"   15 hours ago   Up 15 hours           0.0.0.0:5433->5432/tcp                        node-app-devsecops-lab-dev-postgres-tf
+2b53cc19981a   6ab0b6e73817                      "docker-entrypoint.s…"   15 hours ago   Up 15 hours           0.0.0.0:6380->6379/tcp                        node-app-devsecops-lab-dev-redis-tf
+94f9c5120f9a   fd8d9aa63ba2                      "sh -c 'while true; …"   16 hours ago   Up 16 hours                                                         node-app-devsecops-lab-dev-test-container
+14a9bda3e6a8   hashicorp/vault:latest            "docker-entrypoint.s…"   6 days ago     Up 6 days             0.0.0.0:8200->8200/tcp, [::]:8200->8200/tcp   vault
+95837849b003   prom/blackbox-exporter            "/bin/blackbox_expor…"   6 days ago     Up 6 days             0.0.0.0:9115->9115/tcp, [::]:9115->9115/tcp   blackbox-exporter
+fdd6887dc700   prom/prometheus                   "/bin/prometheus --c…"   6 days ago     Up 6 days             0.0.0.0:9090->9090/tcp, [::]:9090->9090/tcp   prometheus
+b22c80b0051f   prom/alertmanager                 "/bin/alertmanager -…"   6 days ago     Up 6 days             0.0.0.0:9093->9093/tcp, [::]:9093->9093/tcp   alertmanager
+8648f69de505   prom/node-exporter                "/bin/node_exporter"     7 days ago     Up 7 days             0.0.0.0:9100->9100/tcp, [::]:9100->9100/tcp   node-exporter
+110f946ddb18   gcr.io/cadvisor/cadvisor:latest   "/usr/bin/cadvisor -…"   7 days ago     Up 7 days (healthy)   0.0.0.0:8088->8080/tcp, [::]:8088->8080/tcp   cadvisor
+ebc52682087b   grafana/grafana                   "/run.sh"                7 days ago     Up 6 days             0.0.0.0:3001->3000/tcp, [::]:3001->3000/tcp   grafana
+074d7e5638c4   dependencytrack/apiserver         "/usr/bin/tini -- /b…"   11 days ago    Up 7 days (healthy)   0.0.0.0:8085->8080/tcp, [::]:8085->8080/tcp   dependency-track
+c1ee039378d6   dependencytrack/frontend          "/docker-entrypoint.…"   11 days ago    Up 7 days             0.0.0.0:8086->8080/tcp, [::]:8086->8080/tcp   dependency-track-frontend
+851cad4f3605   postgres:16                       "docker-entrypoint.s…"   11 days ago    Up 7 days             5432/tcp                                      dependency-track-postgres
+52cb90762a33   sonarqube:lts-community           "/opt/sonarqube/dock…"   13 days ago    Up 7 days             0.0.0.0:9000->9000/tcp, [::]:9000->9000/tcp   sonarqube
+✅ SUCCESS: Docker status
+
+>>> Docker disk usage
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          60        22        33.84GB   18.12GB (53%)
+Containers      25        24        3.103GB   77.82kB (0%)
+Local Volumes   23        11        6.937GB   215.3MB (3%)
+Build Cache     158       0         3.883GB   1.328GB
+✅ SUCCESS: Docker disk usage
+
+==================================================
+15. Final Full Validation Script
+==================================================
+
+>>> Run full validation script
+========================================
+ DevSecOps Lab Full Validation Report
+ Date: 2026-06-06_14-04-08
+ Namespace: devsecops-dev
+========================================
+
+✅ PASS: kubectl command exists
+✅ PASS: docker command exists
+✅ PASS: curl command exists
+✅ PASS: git command exists
+
+1. Kubernetes Cluster Check
+---------------------------
+✅ PASS: Kubernetes cluster is reachable
+NAME                    STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                       KERNEL-VERSION             CONTAINER-RUNTIME
+desktop-control-plane   Ready    control-plane   15h   v1.36.1   172.26.0.2    <none>        Debian GNU/Linux 13 (trixie)   6.12.76-linuxkit (amd64)   containerd://2.3.1
+
+2. Namespace Check
+------------------
+✅ PASS: Namespace devsecops-dev exists
+
+3. Pods Check
+-------------
+NAME                        READY   STATUS    RESTARTS   AGE
+nginx-6b5fd8c57f-hqzmc      1/1     Running   0          3m11s
+node-app-696cdc8cd5-xhbb8   1/1     Running   0          3m23s
+postgres-7bdd876875-r4rsl   1/1     Running   0          3m23s
+redis-6cdf7c74cd-585fc      1/1     Running   0          3m24s
+✅ PASS: redis pod is Running and Ready
+✅ PASS: postgres pod is Running and Ready
+✅ PASS: node-app pod is Running and Ready
+✅ PASS: nginx pod is Running and Ready
+
+4. Services Check
+-----------------
+NAME       TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+nginx      NodePort    10.96.149.83    <none>        80:30080/TCP   14h
+node-app   ClusterIP   10.96.140.111   <none>        3000/TCP       14h
+postgres   ClusterIP   10.96.102.71    <none>        5432/TCP       14h
+redis      ClusterIP   10.96.126.23    <none>        6379/TCP       14h
+✅ PASS: Service redis exists
+✅ PASS: Service postgres exists
+✅ PASS: Service node-app exists
+✅ PASS: Service nginx exists
+
+5. PostgreSQL Check
+-------------------
+✅ PASS: PostgreSQL is accepting connections
+
+6. Redis Check
+--------------
+✅ PASS: Redis responded with PONG
+
+7. Metrics Server Check
+-----------------------
+✅ PASS: Metrics Server is working
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-6b5fd8c57f-hqzmc      0m           13Mi            
+node-app-696cdc8cd5-xhbb8   8m           47Mi            
+postgres-7bdd876875-r4rsl   4m           27Mi            
+redis-6cdf7c74cd-585fc      6m           7Mi             
+
+8. HPA Check
+------------
+NAME           REFERENCE             TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+node-app-hpa   Deployment/node-app   cpu: 8%/70%   1         3         1          14h
+✅ PASS: HPA is active with target: cpu:
+
+9. Node.js Resources and Probes Check
+-------------------------------------
+✅ PASS: Node.js CPU requests exist
+✅ PASS: Readiness probe exists
+✅ PASS: Liveness probe exists
+
+10. Application URL Test via Port Forward
+-----------------------------------------
+✅ PASS: Port-forward started on localhost:18081
+✅ PASS: Application health endpoint is UP
+✅ PASS: Application can connect to PostgreSQL
+✅ PASS: Application can connect to Redis
+✅ PASS: Security metrics are exposed
+
+/Users/elhalawany/node-app/test-devsecops-lab.sh: line 16: 97009 Terminated: 15          kubectl port-forward svc/nginx "$APP_LOCAL_PORT":80 -n "$NAMESPACE" > /tmp/devsecops-port-forward.log 2>&1
+11. Kustomize Validation
+------------------------
+✅ PASS: Kustomize build succeeded
+✅ PASS: Kubernetes dry-run succeeded
+
+12. Docker Check
+----------------
+✅ PASS: Docker is running
+
+13. Terraform Check
+-------------------
+✅ PASS: Terraform validate succeeded
+
+14. Recent Logs Summary
+-----------------------
+
+--- Logs for nginx ---
+2026/06/06 11:00:58 [notice] 1#1: start worker process 29
+2026/06/06 11:00:58 [notice] 1#1: start worker process 30
+2026/06/06 11:00:58 [notice] 1#1: start worker process 31
+2026/06/06 11:00:58 [notice] 1#1: start worker process 32
+2026/06/06 11:00:58 [notice] 1#1: start worker process 33
+2026/06/06 11:00:58 [notice] 1#1: start worker process 34
+2026/06/06 11:00:58 [notice] 1#1: start worker process 35
+2026/06/06 11:00:58 [notice] 1#1: start worker process 36
+2026/06/06 11:00:58 [notice] 1#1: start worker process 37
+2026/06/06 11:00:58 [notice] 1#1: start worker process 38
+2026/06/06 11:00:58 [notice] 1#1: start worker process 39
+2026/06/06 11:00:58 [notice] 1#1: start worker process 40
+127.0.0.1 - - [06/Jun/2026:11:04:05 +0000] "GET /health HTTP/1.1" 200 162 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:11:04:05 +0000] "GET /api/db-health HTTP/1.1" 200 158 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:11:04:05 +0000] "GET /api/redis-health HTTP/1.1" 200 148 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:11:04:05 +0000] "GET /metrics HTTP/1.1" 200 10453 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:11:04:15 +0000] "GET /health HTTP/1.1" 200 161 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:11:04:15 +0000] "GET /api/db-health HTTP/1.1" 200 158 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:11:04:15 +0000] "GET /api/redis-health HTTP/1.1" 200 148 "-" "curl/8.7.1" "-"
+127.0.0.1 - - [06/Jun/2026:11:04:15 +0000] "GET /metrics HTTP/1.1" 200 10549 "-" "curl/8.7.1" "-"
+
+--- Logs for node-app ---
+[0mGET /health [32m200[0m 0.252 ms - 162[0m
+[0mGET /health [32m200[0m 0.222 ms - 162[0m
+[0mGET /health [32m200[0m 0.427 ms - 162[0m
+[0mGET /health [32m200[0m 0.297 ms - 162[0m
+[0mGET /health [32m200[0m 0.249 ms - 161[0m
+[0mGET /health [32m200[0m 0.433 ms - 161[0m
+[0mGET /health [32m200[0m 0.255 ms - 162[0m
+[0mGET /health [32m200[0m 0.242 ms - 162[0m
+[0mGET /health [32m200[0m 0.244 ms - 162[0m
+[0mGET /health [32m200[0m 0.214 ms - 162[0m
+[0mGET /health [32m200[0m 0.234 ms - 162[0m
+[0mGET /api/db-health [32m200[0m 24.041 ms - 158[0m
+[0mGET /api/redis-health [32m200[0m 2.463 ms - 148[0m
+[0mGET /metrics [32m200[0m 4.525 ms - -[0m
+[0mGET /health [32m200[0m 0.233 ms - 162[0m
+[0mGET /health [32m200[0m 0.244 ms - 162[0m
+[0mGET /health [32m200[0m 0.213 ms - 161[0m
+[0mGET /api/db-health [32m200[0m 9.997 ms - 158[0m
+[0mGET /api/redis-health [32m200[0m 1.050 ms - 148[0m
+[0mGET /metrics [32m200[0m 2.244 ms - -[0m
+
+--- Logs for postgres ---
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2026-06-06 11:00:45.767 UTC [1] LOG:  starting PostgreSQL 16.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+2026-06-06 11:00:45.767 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-06-06 11:00:45.767 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2026-06-06 11:00:45.775 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-06-06 11:00:45.780 UTC [33] LOG:  database system was shut down at 2026-06-06 11:00:45 UTC
+2026-06-06 11:00:45.787 UTC [1] LOG:  database system is ready to accept connections
+2026-06-06 11:03:59.131 UTC [52] FATAL:  database "devsecops" does not exist
+2026-06-06 11:04:09.699 UTC [69] FATAL:  database "devsecops" does not exist
+
+--- Logs for redis ---
+1:C 06 Jun 2026 11:00:44.875 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+1:C 06 Jun 2026 11:00:44.875 * Redis version=7.4.9, bits=64, commit=00000000, modified=0, pid=1, just started
+1:C 06 Jun 2026 11:00:44.875 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+1:M 06 Jun 2026 11:00:44.876 * monotonic clock: POSIX clock_gettime
+1:M 06 Jun 2026 11:00:44.877 * Running mode=standalone, port=6379.
+1:M 06 Jun 2026 11:00:44.878 * Server initialized
+1:M 06 Jun 2026 11:00:44.879 * Ready to accept connections tcp
+
+========================================
+ Final Summary
+========================================
+PASS: 30
+FAIL: 0
+WARN: 0
+
+✅ Overall Status: HEALTHY
+Recommendation: Lab is ready for next phase.
+
+Report saved to:
+/Users/elhalawany/node-app/test-reports/devsecops-test-report-2026-06-06_14-04-08.txt
+✅ SUCCESS: Run full validation script
+
+==================================================
+16. Recovery Summary
+==================================================
+Recovery completed.
+
+Report:
+/Users/elhalawany/node-app/recovery-reports/recovery-report-2026-06-06_14-00-42.txt
+
+Logs:
+/Users/elhalawany/node-app/recovery-reports/logs-2026-06-06_14-00-42
+
+If any failure remains, check the recommendation above and the service logs.

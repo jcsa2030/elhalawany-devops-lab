@@ -25,6 +25,20 @@ pipeline {
             }
         }
 
+stage('Terraform Validate') {
+    steps {
+        dir('terraform') {
+            sh '''
+                terraform version
+                terraform init -backend=false
+                terraform fmt -check
+                terraform validate
+            '''
+        }
+    }
+}
+
+
         stage('Verify Tools') {
             steps {
                 sh '''
@@ -139,31 +153,87 @@ stage('OPA Policy Gate') {
     }
 }
 
-                stage('SonarQube SAST') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                        sh '''
+
+stage('SonarQube SAST') {
+    steps {
+        timeout(time: 5, unit: 'MINUTES') {
+            withSonarQubeEnv('SonarQube') {
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                    sh '''
                         sonar-scanner \
                           -Dsonar.projectKey=elhalawany-devops-lab \
                           -Dsonar.projectName="Elhalawany DevOps Lab" \
                           -Dsonar.sources=. \
                           -Dsonar.sourceEncoding=UTF-8 \
-                          -Dsonar.nodejs.executable=/usr/local/opt/node@20/bin/node \
-                          -Dsonar.exclusions=index.js,node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,scripts/**,security-reports/**,zap-reports/**,*.csv,*.json
-                        '''
-                    }
+                          -Dsonar.token=$SONAR_TOKEN \
+                          -Dsonar.exclusions="index.js,node_modules/**,coverage/**,dist/**,build/**,.scannerwork/**,compliance/**,security-reports/**,zap-reports/**,test-reports/**,recovery-reports/**,maintenance-reports/**,diagnostic-reports/**,daily-health-reports/**,k8s-admin-reports/**,backups/**,terraform/.terraform/**,terraform/*.tfstate,terraform/*.tfstate.backup,*.log,*.tar.gz,.env*,*.json,*.html,*.sh"
+                    '''
                 }
             }
         }
+    }
+}
 
         stage('SonarQube Quality Gate') {
-            steps {
-                timeout(time: 3, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
+    steps {
+        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+            sh '''
+                set -e
+
+                echo "Checking SonarQube Quality Gate using API polling..."
+
+                TASK_FILE=".scannerwork/report-task.txt"
+
+                if [ ! -f "$TASK_FILE" ]; then
+                    echo "ERROR: SonarQube report-task.txt not found"
+                    exit 1
+                fi
+
+                CE_TASK_ID=$(grep "ceTaskId=" "$TASK_FILE" | cut -d'=' -f2)
+
+                if [ -z "$CE_TASK_ID" ]; then
+                    echo "ERROR: SonarQube CE task ID not found"
+                    exit 1
+                fi
+
+                echo "SonarQube CE Task ID: $CE_TASK_ID"
+
+                for i in $(seq 1 30); do
+                    STATUS=$(curl -s -u "$SONAR_TOKEN:" \
+                      "http://localhost:9000/api/ce/task?id=$CE_TASK_ID" \
+                      | python3 -c "import sys,json; print(json.load(sys.stdin)['task']['status'])")
+
+                    echo "SonarQube task status: $STATUS"
+
+                    if [ "$STATUS" = "SUCCESS" ]; then
+                        break
+                    fi
+
+                    if [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "CANCELED" ]; then
+                        echo "ERROR: SonarQube background task failed: $STATUS"
+                        exit 1
+                    fi
+
+                    sleep 10
+                done
+
+                PROJECT_STATUS=$(curl -s -u "$SONAR_TOKEN:" \
+                  "http://localhost:9000/api/qualitygates/project_status?projectKey=elhalawany-devops-lab" \
+                  | python3 -c "import sys,json; print(json.load(sys.stdin)['projectStatus']['status'])")
+
+                echo "SonarQube Quality Gate: $PROJECT_STATUS"
+
+                if [ "$PROJECT_STATUS" != "OK" ]; then
+                    echo "ERROR: SonarQube Quality Gate failed: $PROJECT_STATUS"
+                    exit 1
+                fi
+
+                echo "SonarQube Quality Gate passed."
+            '''
         }
+    }
+}
+
                         stage('Trivy Filesystem Scan') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
@@ -187,6 +257,17 @@ stage('OPA Policy Gate') {
                 }
             }
         }
+
+
+        stage('Kubernetes Validate') {
+    steps {
+        sh '''
+            kubectl version --client
+            kubectl kustomize k8s/base
+            kubectl apply --dry-run=client -k k8s/base
+        '''
+    }
+}
 
         stage('Docker Build') {
             steps {
@@ -260,6 +341,24 @@ stage('OPA Policy Gate') {
                 }
             }
         }
+
+
+stage('Update GitOps Dev Image') {
+    steps {
+        sh '''
+            set -e
+
+            echo "Updating GitOps repository with latest image tag..."
+
+            chmod +x update-gitops-image.sh
+
+            IMAGE_TAG=security \
+            ENVIRONMENT=dev \
+            GITOPS_REPO_DIR=$HOME/elhalawany-devops-gitops \
+            ./update-gitops-image.sh
+        '''
+    }
+}
 
 
         stage('Deploy UAT') {

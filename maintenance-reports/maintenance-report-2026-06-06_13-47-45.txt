@@ -1,0 +1,226 @@
+========================================
+ DevSecOps Lab Maintenance Report
+ Date: 2026-06-06_13-47-45
+ Namespace: devsecops-dev
+========================================
+
+>>> 1. Kubernetes Cluster Status
+NAME                    STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                       KERNEL-VERSION             CONTAINER-RUNTIME
+desktop-control-plane   Ready    control-plane   14h   v1.36.1   172.26.0.2    <none>        Debian GNU/Linux 13 (trixie)   6.12.76-linuxkit (amd64)   containerd://2.3.1
+NAME                 STATUS   AGE
+default              Active   14h
+devsecops-dev        Active   14h
+ingress-nginx        Active   13h
+kube-node-lease      Active   14h
+kube-public          Active   14h
+kube-system          Active   14h
+local-path-storage   Active   14h
+
+>>> 2. DevSecOps Namespace Resources
+NAME                           READY   STATUS    RESTARTS   AGE   IP            NODE                    NOMINATED NODE   READINESS GATES
+pod/nginx-85cb54f749-dnjb7     1/1     Running   0          13h   10.244.0.19   desktop-control-plane   <none>           <none>
+pod/node-app-65db9647f-cr5dq   1/1     Running   0          36s   10.244.0.30   desktop-control-plane   <none>           <none>
+pod/postgres-c8876b9b8-g2nrv   1/1     Running   0          13h   10.244.0.21   desktop-control-plane   <none>           <none>
+pod/redis-88f6ffbc8-wl9lx      1/1     Running   0          13h   10.244.0.22   desktop-control-plane   <none>           <none>
+
+NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE   SELECTOR
+service/nginx      NodePort    10.96.149.83    <none>        80:30080/TCP   14h   app=nginx
+service/node-app   ClusterIP   10.96.140.111   <none>        3000/TCP       14h   app=node-app
+service/postgres   ClusterIP   10.96.102.71    <none>        5432/TCP       14h   app=postgres
+service/redis      ClusterIP   10.96.126.23    <none>        6379/TCP       14h   app=redis
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                            SELECTOR
+deployment.apps/nginx      1/1     1            1           13h   nginx        nginx:alpine                                      app=nginx
+deployment.apps/node-app   1/1     1            1           13h   node-app     ghcr.io/jcsa2030/elhalawany-devops-lab:security   app=node-app
+deployment.apps/postgres   1/1     1            1           13h   postgres     postgres:16-alpine                                app=postgres
+deployment.apps/redis      1/1     1            1           13h   redis        redis:7-alpine                                    app=redis
+
+NAME                                  DESIRED   CURRENT   READY   AGE     CONTAINERS   IMAGES                                            SELECTOR
+replicaset.apps/nginx-85cb54f749      1         1         1       13h     nginx        nginx:alpine                                      app=nginx,pod-template-hash=85cb54f749
+replicaset.apps/node-app-65db9647f    1         1         1       36s     node-app     ghcr.io/jcsa2030/elhalawany-devops-lab:security   app=node-app,pod-template-hash=65db9647f
+replicaset.apps/node-app-77c6458fd9   0         0         0       8m34s   node-app     ghcr.io/jcsa2030/elhalawany-devops-lab:security   app=node-app,pod-template-hash=77c6458fd9
+replicaset.apps/node-app-78ff7db85d   0         0         0       13h     node-app     ghcr.io/jcsa2030/elhalawany-devops-lab:security   app=node-app,pod-template-hash=78ff7db85d
+replicaset.apps/node-app-846dd465     0         0         0       12h     node-app     ghcr.io/jcsa2030/elhalawany-devops-lab:security   app=node-app,pod-template-hash=846dd465
+replicaset.apps/postgres-c8876b9b8    1         1         1       13h     postgres     postgres:16-alpine                                app=postgres,pod-template-hash=c8876b9b8
+replicaset.apps/redis-88f6ffbc8       1         1         1       13h     redis        redis:7-alpine                                    app=redis,pod-template-hash=88f6ffbc8
+
+NAME                                               REFERENCE             TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/node-app-hpa   Deployment/node-app   cpu: <unknown>/70%   1         3         1          14h
+NAME           STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+postgres-pvc   Bound    pvc-f87ca63c-00b6-4f17-bcf6-4400510bea3c   1Gi        RWO            standard       <unset>                 14h
+NAME           REFERENCE             TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
+node-app-hpa   Deployment/node-app   cpu: <unknown>/70%   1         3         1          14h
+
+>>> 3. Resource Usage
+NAME                    CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   
+desktop-control-plane   283m         1%       1356Mi          17%         
+NAME                       CPU(cores)   MEMORY(bytes)   
+nginx-85cb54f749-dnjb7     0m           13Mi            
+node-app-65db9647f-cr5dq   27m          44Mi            
+postgres-c8876b9b8-g2nrv   1m           36Mi            
+redis-88f6ffbc8-wl9lx      5m           6Mi             
+
+>>> 4. Restart Unhealthy Pods Only
+
+>>> 5. Rollout Status
+deployment "redis" successfully rolled out
+deployment "postgres" successfully rolled out
+deployment "node-app" successfully rolled out
+deployment "nginx" successfully rolled out
+
+>>> 6. Application Health
+{"status":"UP","application":"Elhalawany Dev Environment","environment":"dev","port":"3000","uptime_seconds":40.177186349,"timestamp":"2026-06-06T10:47:51.280Z"}
+{"status":"UP","database":"PostgreSQL","message":"Database connection successful","db_time":"2026-06-06T10:47:51.336Z","timestamp":"2026-06-06T10:47:51.341Z"}
+{"status":"UP","cache":"Redis","message":"Redis connection successful","test_value":"Redis cache is working","timestamp":"2026-06-06T10:47:51.383Z"}
+# HELP security_compliance_score Overall enterprise security compliance score
+# TYPE security_compliance_score gauge
+security_compliance_score 100
+# HELP security_release_success_total Release success indicator
+# TYPE security_release_success_total gauge
+security_release_success_total 1
+# HELP security_uat_success_total UAT deployment success indicator
+# TYPE security_uat_success_total gauge
+security_uat_success_total 1
+# HELP security_production_success_total Production deployment success indicator
+# TYPE security_production_success_total gauge
+security_production_success_total 1
+# HELP security_zap_fail_new OWASP ZAP new failed findings
+# TYPE security_zap_fail_new gauge
+security_zap_fail_new 0
+# HELP security_zap_warn_new OWASP ZAP new warning findings
+# TYPE security_zap_warn_new gauge
+security_zap_warn_new 0
+# HELP security_sonar_quality_gate_pass SonarQube Quality Gate pass indicator
+# TYPE security_sonar_quality_gate_pass gauge
+security_sonar_quality_gate_pass 1
+# HELP security_opa_policy_gate_pass OPA Policy Gate pass indicator
+# TYPE security_opa_policy_gate_pass gauge
+security_opa_policy_gate_pass 1
+# HELP security_gitleaks_pass GitLeaks scan pass indicator
+# TYPE security_gitleaks_pass gauge
+security_gitleaks_pass 1
+
+>>> 7. Kubernetes Events
+LAST SEEN   TYPE      REASON                         OBJECT                                 MESSAGE
+25m         Normal    SuccessfulCreate               replicaset/node-app-846dd465           Created pod: node-app-846dd465-jnmkl
+25m         Normal    Killing                        pod/node-app-846dd465-n7qs2            Stopping container node-app
+25m         Normal    Scheduled                      pod/node-app-846dd465-jnmkl            Successfully assigned devsecops-dev/node-app-846dd465-jnmkl to desktop-control-plane
+25m         Normal    Started                        pod/node-app-846dd465-jnmkl            Container started
+25m         Normal    Created                        pod/node-app-846dd465-jnmkl            Container created
+25m         Normal    Pulled                         pod/node-app-846dd465-jnmkl            Successfully pulled image "ghcr.io/jcsa2030/elhalawany-devops-lab:security" in 26ms (26ms including waiting). Image size: 139420924 bytes.
+25m         Normal    Pulling                        pod/node-app-846dd465-jnmkl            Pulling image "ghcr.io/jcsa2030/elhalawany-devops-lab:security"
+20s         Warning   FailedGetResourceMetric        horizontalpodautoscaler/node-app-hpa   failed to get cpu utilization: unable to get metrics for resource cpu: no metrics returned from resource metrics API
+20s         Warning   FailedComputeMetricsReplicas   horizontalpodautoscaler/node-app-hpa   invalid metrics (1 invalid out of 1), first error is: failed to get cpu resource metric value: failed to get cpu utilization: unable to get metrics for resource cpu: no metrics returned from resource metrics API
+5s          Warning   FailedGetResourceMetric        horizontalpodautoscaler/node-app-hpa   failed to get cpu utilization: did not receive metrics for targeted pods (pods might be unready)
+4s          Warning   FailedComputeMetricsReplicas   horizontalpodautoscaler/node-app-hpa   invalid metrics (1 invalid out of 1), first error is: failed to get cpu resource metric value: failed to get cpu utilization: did not receive metrics for targeted pods (pods might be unready)
+8m40s       Normal    Scheduled                      pod/node-app-77c6458fd9-crflb          Successfully assigned devsecops-dev/node-app-77c6458fd9-crflb to desktop-control-plane
+8m40s       Normal    SuccessfulCreate               replicaset/node-app-77c6458fd9         Created pod: node-app-77c6458fd9-crflb
+8m40s       Normal    ScalingReplicaSet              deployment/node-app                    Scaled up replica set node-app-77c6458fd9 from 0 to 1
+8m39s       Normal    Pulling                        pod/node-app-77c6458fd9-crflb          Pulling image "ghcr.io/jcsa2030/elhalawany-devops-lab:security"
+8m36s       Normal    Pulled                         pod/node-app-77c6458fd9-crflb          Successfully pulled image "ghcr.io/jcsa2030/elhalawany-devops-lab:security" in 3.293s (3.293s including waiting). Image size: 139062696 bytes.
+8m36s       Normal    Started                        pod/node-app-77c6458fd9-crflb          Container started
+8m36s       Normal    Created                        pod/node-app-77c6458fd9-crflb          Container created
+8m24s       Normal    SuccessfulDelete               replicaset/node-app-846dd465           Deleted pod: node-app-846dd465-jnmkl
+8m24s       Normal    Killing                        pod/node-app-846dd465-jnmkl            Stopping container node-app
+8m24s       Normal    ScalingReplicaSet              deployment/node-app                    Scaled down replica set node-app-846dd465 from 1 to 0
+42s         Normal    Scheduled                      pod/node-app-65db9647f-cr5dq           Successfully assigned devsecops-dev/node-app-65db9647f-cr5dq to desktop-control-plane
+42s         Normal    Pulling                        pod/node-app-65db9647f-cr5dq           Pulling image "ghcr.io/jcsa2030/elhalawany-devops-lab:security"
+42s         Normal    SuccessfulCreate               replicaset/node-app-65db9647f          Created pod: node-app-65db9647f-cr5dq
+42s         Normal    Started                        pod/node-app-65db9647f-cr5dq           Container started
+42s         Normal    Created                        pod/node-app-65db9647f-cr5dq           Container created
+42s         Normal    Pulled                         pod/node-app-65db9647f-cr5dq           Successfully pulled image "ghcr.io/jcsa2030/elhalawany-devops-lab:security" in 27ms (27ms including waiting). Image size: 139062696 bytes.
+42s         Normal    ScalingReplicaSet              deployment/node-app                    Scaled up replica set node-app-65db9647f from 0 to 1
+30s         Normal    Killing                        pod/node-app-77c6458fd9-crflb          Stopping container node-app
+30s         Normal    SuccessfulDelete               replicaset/node-app-77c6458fd9         Deleted pod: node-app-77c6458fd9-crflb
+30s         Normal    ScalingReplicaSet              deployment/node-app                    Scaled down replica set node-app-77c6458fd9 from 1 to 0
+
+>>> 8. Pod Logs Snapshot
+Saved logs for nginx
+Saved logs for node-app
+Saved logs for postgres
+Saved logs for redis
+
+>>> 9. Docker System Status
+CONTAINER ID   IMAGE                             COMMAND                  CREATED        STATUS                PORTS                                         NAMES
+96a868d6d85c   nginx:alpine                      "/docker-entrypoint.…"   13 hours ago   Up 13 hours           0.0.0.0:8080->80/tcp, [::]:8080->80/tcp       elhalawany-nginx
+5a789fab7181   778a74be4abb                      "docker-entrypoint.s…"   13 hours ago   Up 13 hours           3000/tcp                                      elhalawany-app
+e41f857f0069   postgres:16-alpine                "docker-entrypoint.s…"   13 hours ago   Up 13 hours           5432/tcp                                      elhalawany-postgres
+b502c9e6ff84   redis:7-alpine                    "docker-entrypoint.s…"   13 hours ago   Up 13 hours           6379/tcp                                      elhalawany-redis
+9fa7f5fa176b   7e8ff0a32da3                      "/docker-entrypoint.…"   15 hours ago   Up 15 hours           0.0.0.0:8089->80/tcp                          node-app-devsecops-lab-dev-nginx-tf
+0336c8ba7da6   b8ecbc8c886d                      "docker-entrypoint.s…"   15 hours ago   Up 15 hours           0.0.0.0:8090->3000/tcp                        node-app-devsecops-lab-dev-app-tf
+036a5311b3ce   16bc17c64a57                      "docker-entrypoint.s…"   15 hours ago   Up 15 hours           0.0.0.0:5433->5432/tcp                        node-app-devsecops-lab-dev-postgres-tf
+2b53cc19981a   6ab0b6e73817                      "docker-entrypoint.s…"   15 hours ago   Up 15 hours           0.0.0.0:6380->6379/tcp                        node-app-devsecops-lab-dev-redis-tf
+94f9c5120f9a   fd8d9aa63ba2                      "sh -c 'while true; …"   15 hours ago   Up 15 hours                                                         node-app-devsecops-lab-dev-test-container
+14a9bda3e6a8   hashicorp/vault:latest            "docker-entrypoint.s…"   6 days ago     Up 6 days             0.0.0.0:8200->8200/tcp, [::]:8200->8200/tcp   vault
+95837849b003   prom/blackbox-exporter            "/bin/blackbox_expor…"   6 days ago     Up 6 days             0.0.0.0:9115->9115/tcp, [::]:9115->9115/tcp   blackbox-exporter
+fdd6887dc700   prom/prometheus                   "/bin/prometheus --c…"   6 days ago     Up 6 days             0.0.0.0:9090->9090/tcp, [::]:9090->9090/tcp   prometheus
+b22c80b0051f   prom/alertmanager                 "/bin/alertmanager -…"   6 days ago     Up 6 days             0.0.0.0:9093->9093/tcp, [::]:9093->9093/tcp   alertmanager
+8648f69de505   prom/node-exporter                "/bin/node_exporter"     7 days ago     Up 7 days             0.0.0.0:9100->9100/tcp, [::]:9100->9100/tcp   node-exporter
+110f946ddb18   gcr.io/cadvisor/cadvisor:latest   "/usr/bin/cadvisor -…"   7 days ago     Up 7 days (healthy)   0.0.0.0:8088->8080/tcp, [::]:8088->8080/tcp   cadvisor
+ebc52682087b   grafana/grafana                   "/run.sh"                7 days ago     Up 6 days             0.0.0.0:3001->3000/tcp, [::]:3001->3000/tcp   grafana
+074d7e5638c4   dependencytrack/apiserver         "/usr/bin/tini -- /b…"   11 days ago    Up 7 days (healthy)   0.0.0.0:8085->8080/tcp, [::]:8085->8080/tcp   dependency-track
+c1ee039378d6   dependencytrack/frontend          "/docker-entrypoint.…"   11 days ago    Up 7 days             0.0.0.0:8086->8080/tcp, [::]:8086->8080/tcp   dependency-track-frontend
+851cad4f3605   postgres:16                       "docker-entrypoint.s…"   11 days ago    Up 7 days             5432/tcp                                      dependency-track-postgres
+52cb90762a33   sonarqube:lts-community           "/opt/sonarqube/dock…"   13 days ago    Up 7 days             0.0.0.0:9000->9000/tcp, [::]:9000->9000/tcp   sonarqube
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          60        22        33.84GB   18.12GB (53%)
+Containers      25        24        3.103GB   77.82kB (0%)
+Local Volumes   23        11        6.933GB   215.3MB (3%)
+Build Cache     158       0         3.883GB   1.328GB
+
+>>> 10. Terraform Validation
+[32m[1mSuccess![0m The configuration is valid.
+[0m
+
+>>> 11. Kustomize Validation
+namespace/devsecops-dev configured (dry run)
+configmap/nginx-config configured (dry run)
+configmap/node-app-config configured (dry run)
+secret/node-app-secret configured (dry run)
+secret/postgres-secret configured (dry run)
+service/nginx configured (dry run)
+service/node-app configured (dry run)
+service/postgres configured (dry run)
+service/redis configured (dry run)
+persistentvolumeclaim/postgres-pvc configured (dry run)
+deployment.apps/nginx configured (dry run)
+deployment.apps/node-app configured (dry run)
+deployment.apps/postgres configured (dry run)
+deployment.apps/redis configured (dry run)
+horizontalpodautoscaler.autoscaling/node-app-hpa configured (dry run)
+ingress.networking.k8s.io/node-app-ingress configured (dry run)
+
+>>> 12. Git Status
+On branch security
+Your branch is up to date with 'origin/security'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   test-devsecops-lab.sh
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	maintenance-devsecops-lab.sh
+	maintenance-reports/
+	test-reports/devsecops-test-report-2026-06-06_00-54-01.txt
+	test-reports/devsecops-test-report-2026-06-06_00-58-04.txt
+	test-reports/devsecops-test-report-2026-06-06_01-04-23.txt
+	test-reports/devsecops-test-report-2026-06-06_01-12-34.txt
+	test-reports/devsecops-test-report-2026-06-06_01-21-34.txt
+	test-reports/devsecops-test-report-2026-06-06_13-39-34.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+1658c89 Fix PostgreSQL connection configuration
+98af257 Fix PostgreSQL environment variables for Kubernetes
+386281b Add full DevSecOps lab backup script
+54600f0 Add Kubernetes validation stage to Jenkins pipeline
+6c9c51c Add Kubernetes base documentation
+
+>>> 13. Cleanup Old Reports
+
+========================================
+ Maintenance Completed
+ Report saved to:
+/Users/elhalawany/node-app/maintenance-reports/maintenance-report-2026-06-06_13-47-45.txt
+========================================

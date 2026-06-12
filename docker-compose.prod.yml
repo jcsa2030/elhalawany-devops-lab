@@ -1,57 +1,65 @@
 services:
-  app:
-    image: ${APP_IMAGE:-elhalawany-devops-app:latest}
-    container_name: elhalawany-app
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: devsecopsdb
+      POSTGRES_USER: devsecops
+      POSTGRES_PASSWORD: devsecops_password_change_me
+    volumes:
+      - prod_postgres_data:/var/lib/postgresql/data
+    networks:
+      - devops-network
     restart: unless-stopped
-    env_file:
-      - .env.prod
-    expose:
-      - "3000"
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - devops-network
+    restart: unless-stopped
+
+  app:
+    image: ${APP_IMAGE:-ghcr.io/jcsa2030/elhalawany-devops-lab:security}
+    environment:
+      NODE_ENV: production
+      APP_ENV: production
+      PORT: 3000
+
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: devsecopsdb
+      POSTGRES_USER: devsecops
+      POSTGRES_PASSWORD: devsecops_password_change_me
+
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: devsecopsdb
+      DB_USER: devsecops
+      DB_PASSWORD: devsecops_password_change_me
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       - postgres
       - redis
     networks:
       - devops-network
+    restart: unless-stopped
 
   nginx:
     image: nginx:alpine
-    container_name: elhalawany-nginx
-    restart: unless-stopped
     ports:
       - "8080:80"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - app
     networks:
       - devops-network
-
-  postgres:
-    image: postgres:16-alpine
-    container_name: elhalawany-postgres
     restart: unless-stopped
-    environment:
-      POSTGRES_DB: devopsdb
-      POSTGRES_USER: devopsuser
-      POSTGRES_PASSWORD: devopspassword
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - devops-network
-
-  redis:
-    image: redis:7-alpine
-    container_name: elhalawany-redis
-    restart: unless-stopped
-    volumes:
-      - redis-data:/data
-    networks:
-      - devops-network
-
-volumes:
-  postgres-data:
-  redis-data:
 
 networks:
   devops-network:
     driver: bridge
+
+volumes:
+  prod_postgres_data:

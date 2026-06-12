@@ -1,7 +1,6 @@
 services:
   app:
     image: ${APP_IMAGE:-elhalawany-devops-app:latest}
-    container_name: elhalawany-app
     restart: unless-stopped
     env_file:
       - .env.dev
@@ -15,7 +14,6 @@ services:
 
   nginx:
     image: nginx:alpine
-    container_name: elhalawany-nginx
     restart: unless-stopped
     ports:
       - "8080:80"
@@ -28,12 +26,11 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: elhalawany-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: devopsdb
-      POSTGRES_USER: devopsuser
-      POSTGRES_PASSWORD: devopspassword
+      POSTGRES_DB: devsecopsdb
+      POSTGRES_USER: devsecops
+      POSTGRES_PASSWORD: devsecops_password_change_me
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
@@ -41,7 +38,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: elhalawany-redis
     restart: unless-stopped
     volumes:
       - redis-data:/data
