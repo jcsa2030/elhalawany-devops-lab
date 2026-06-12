@@ -343,6 +343,24 @@ stage('SonarQube SAST') {
         }
 
 
+stage('Update GitOps Dev Image') {
+    steps {
+        sh '''
+            set -e
+
+            echo "Updating GitOps repository with latest image tag..."
+
+            chmod +x update-gitops-image.sh
+
+            IMAGE_TAG=security \
+            ENVIRONMENT=dev \
+            GITOPS_REPO_DIR=$HOME/elhalawany-devops-gitops \
+            ./update-gitops-image.sh
+        '''
+    }
+}
+
+
         stage('Deploy UAT') {
     steps {
         sh '''
